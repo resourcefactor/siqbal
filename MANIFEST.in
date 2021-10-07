@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include siqbal *.css
+recursive-include siqbal *.csv
+recursive-include siqbal *.html
+recursive-include siqbal *.ico
+recursive-include siqbal *.js
+recursive-include siqbal *.json
+recursive-include siqbal *.md
+recursive-include siqbal *.png
+recursive-include siqbal *.py
+recursive-include siqbal *.svg
+recursive-include siqbal *.txt
+recursive-exclude siqbal *.pyc
