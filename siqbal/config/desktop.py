@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from frappe import _
 
 def get_data():
 	return [
 		{
-			"module_name": "Siqbal",
-			"color": "grey",
-			"icon": "octicon octicon-file-directory",
+			"module_name": "SIqbal",
+			"color": "green",
+			"icon": "octicon octicon-home",
 			"type": "module",
-			"label": _("Siqbal")
+			"label": _("SIqbal")
 		}
 	]

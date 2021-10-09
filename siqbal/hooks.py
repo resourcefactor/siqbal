@@ -1,31 +1,26 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 from . import __version__ as app_version
 
-app_name = "siqbal"
-app_title = "Siqbal"
-app_publisher = "RF"
-app_description = "Tiles Comapany"
+app_name = "SIqbal"
+app_title = "SIqbal"
+app_publisher = "RC"
+app_description = "Customizations for SIqbal"
 app_icon = "octicon octicon-file-directory"
-app_color = "grey"
-app_email = "hamza@rf.com"
+app_color = "green"
+app_email = "developer@rccorner.com"
 app_license = "MIT"
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/siqbal/css/siqbal.css"
+app_include_css = "/assets/siqbal/css/siqbal.css"
 # app_include_js = "/assets/siqbal/js/siqbal.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/siqbal/css/siqbal.css"
 # web_include_js = "/assets/siqbal/js/siqbal.js"
-
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "siqbal/public/scss/website"
-
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
 # page_js = {"page" : "public/js/file.js"}
@@ -35,6 +30,32 @@ app_license = "MIT"
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+
+doctype_js = {
+		"Address": "public/js/address.js",
+		"Architect and Contractor": "public/js/architect_and_contractor.js",
+		"Authorization Rule": "public/js/authorization_rule.js",
+		"Customer": "public/js/customer.js",
+		"Delivery Note" : "public/js/delivery_note.js",
+		"Item": "public/js/item.js",
+		"Journal Entry": "public/js/journal_entry.js",
+		"Landed Cost Voucher": "public/js/landed_cost_voucher.js",
+		"Material Request" : "public/js/material_request.js",
+		"Opportunity": "public/js/opportunity.js",
+		"Payment Entry": "public/js/payment_entry.js",
+		"Property Detail": "public/js/property_detail.js",
+		"Purchase Invoice" : "public/js/purchase_invoice.js",
+		"Purchase Order" : "public/js/purchase_order.js",
+		"Purchase Receipt" : "public/js/purchase_receipt.js",
+		"Quotation" : "public/js/quotation.js",
+		"Request for Quotation": "public/js/request_for_quotation.js",
+		"Salary Slip" : "public/js/salary_slip.js",
+		"Sales Invoice" : "public/js/sales_invoice.js",
+		"Sales Order" : "public/js/sales_order.js",
+		"Stock Entry" : "public/js/stock_entry.js",
+		"Stock Reconciliation" : "public/js/stock_reconciliation.js",
+		"Supplier Quotation": "public/js/supplier_quotation.js"
+	}
 
 # Home Pages
 # ----------
@@ -46,6 +67,9 @@ app_license = "MIT"
 # role_home_page = {
 #	"Role": "home_page"
 # }
+
+# Website user home page (by function)
+# get_website_user_home_page = "siqbal.utils.get_home_page"
 
 # Generators
 # ----------
@@ -77,14 +101,6 @@ app_license = "MIT"
 # 	"Event": "frappe.desk.doctype.event.event.has_permission",
 # }
 
-# DocType Class
-# ---------------
-# Override standard doctype classes
-
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
-
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -96,6 +112,76 @@ app_license = "MIT"
 # 		"on_trash": "method"
 #	}
 # }
+
+doc_events = {
+	"Sales Order": {
+		"validate": [
+			"siqbal.hook_events.sales_order.set_average_valuation_rate",
+		#	"siqbal.utils.validate_date"
+		],
+		"before_submit": "siqbal.hook_events.sales_order.unset_needs_approval",
+		"before_update_after_submit": "siqbal.hook_events.sales_order.validate_items_rate_and_update_boxes"
+	},
+	"Sales Invoice": {
+		"validate": [
+			"siqbal.hook_events.sales_invoice.validate_discount_while_return",
+			"siqbal.hook_events.sales_invoice.validate_taxes_and_charges_from_so",
+			"siqbal.utils.add_location",
+			"siqbal.hook_events.sales_invoice.validate_sales_invoice"
+		#	"siqbal.utils.validate_date"
+		],
+		"before_insert": "siqbal.hook_events.sales_invoice.set_supplier_details",
+		"on_submit": [
+			"siqbal.hook_events.sales_invoice.update_reserved_qty",
+			"siqbal.hook_events.sales_invoice.create_purchase_invoices_against_sales_taxes",
+			# "siqbal.utils.change_pi_status"			
+			#"siqbal.hook_events.sales_invoice.validate_user_warehouse"
+		],
+		"on_cancel": "siqbal.hook_events.sales_invoice.update_reserved_qty"
+	},
+	"Payment Entry": {
+		"validate": [
+			"siqbal.hook_events.payment_entry.validate_sales_order",
+			# "siqbal.hook_events.payment_entry.validate_salaryslip_amount",
+			#"siqbal.utils.validate_date"
+		],
+		# "on_submit": "siqbal.hook_events.payment_entry.update_salaryslip_status",
+		# "on_cancel": "siqbal.hook_events.payment_entry.update_salaryslip_status"
+	},
+	"Stock Entry": {
+		#"validate": "siqbal.utils.validate_date",
+		#"on_submit": "siqbal.hook_events.stock_entry.validate_user_warehouse"
+	},
+	"Opportunity": {
+		"validate": "siqbal.utils.send_followup_sms"
+	},
+	"Purchase Invoice": {
+		"validate": "siqbal.utils.add_location"
+	},
+	"Purchase Order": {
+		#"validate": "siqbal.utils.validate_date"
+	},
+	"Purchase Receipt": {
+		#"validate": "siqbal.utils.validate_date"
+	},
+	"Stock Reconciliation": {
+		#"validate": "siqbal.utils.validate_date"
+	},
+	"Quotation": {
+		#"validate": "siqbal.utils.validate_date"
+	# },
+	# "Journal Entry": {
+	# 	"before_save": "siqbal.hook_events.journal_entry.set_name"
+	}
+}
+
+
+jenv = {
+	"methods" : [
+	"get_qrcode_image:siqbal.utils.get_qrcode_image"
+	]
+}
+
 
 # Scheduled Tasks
 # ---------------
@@ -136,40 +222,4 @@ app_license = "MIT"
 # override_doctype_dashboards = {
 # 	"Task": "siqbal.task.get_dashboard_data"
 # }
-
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-
-# User Data Protection
-# --------------------
-
-user_data_fields = [
-	{
-		"doctype": "{doctype_1}",
-		"filter_by": "{filter_by}",
-		"redact_fields": ["{field_1}", "{field_2}"],
-		"partial": 1,
-	},
-	{
-		"doctype": "{doctype_2}",
-		"filter_by": "{filter_by}",
-		"partial": 1,
-	},
-	{
-		"doctype": "{doctype_3}",
-		"strict": False,
-	},
-	{
-		"doctype": "{doctype_4}"
-	}
-]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"siqbal.auth.validate"
-# ]
 
