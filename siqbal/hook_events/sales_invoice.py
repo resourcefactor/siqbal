@@ -24,17 +24,17 @@ def create_purchase_invoices_against_sales_taxes(si, method):
 				if d.sales_order:
 					sales_order_no = d.sales_order
 		for row in si.taxes:
-			if "22750 - Freight Payable" in row.account_head and row.tax_amount>0:
+			if "5205 - Freight and Forwarding Charges - SIH" in row.account_head and row.tax_amount>0:
 				purchase_invoice=frappe.get_doc(
 					{
 						'doctype': 'Purchase Invoice',
-						"naming_series": "PLC-",
+						"naming_series": "PI-",
 						"remarks": si.name,
-						"cust_sales_order": sales_order_no,
+						# "cust_sales_order": sales_order_no,
 						"docstatus": 1,
 						"discount_amount": 0,
-						"supplier": "LOADER BIKE",
-						"supplier_name": "LOADER BIKE",
+						"supplier": "S-00006",
+						"supplier_name": "Loader Bike",
 						"is_paid": 0,
 						"company": si.company,
 						"set_posting_time": 0,
@@ -44,44 +44,8 @@ def create_purchase_invoices_against_sales_taxes(si, method):
 						"submit_on_creation": 1,
 						"items": [
 							{
-								"item_code": "99999",
-								"item_name": "FREIGHT CHARGES",
-								"qty": 1,
-								"cost_center": row.cost_center,
-								"expense_account": row.account_head,
-								"rate": row.tax_amount,
-								"received_qty": 1,
-								"uom": "Nos",
-								"conversion_factor": 1
-							}
-						]
-
-					})
-				purchase_invoice.insert(ignore_permissions = True)
-				frappe.msgprint("Purchase Invoice has been Created.")
-
-			if "22755 - Cutting / Fitting Charges" in row.account_head and row.tax_amount>0 :
-				purchase_invoice=frappe.get_doc(
-					{
-						'doctype': 'Purchase Invoice',
-						"naming_series": "P-SO-",
-						"remarks": si.name,
-						"cust_sales_order": sales_order_no,
-						"docstatus": 1,
-						"discount_amount": 0,
-						"supplier": "Cutting / Fitting",
-						"supplier_name": "Cutting / Fitting",
-						"is_paid": 0,
-						"company": si.company,
-						"set_posting_time": 0,
-						"is_return": 0,
-						"ignore_pricing_rule": 1,
-						"update_stock": 0,
-						"submit_on_creation": 1,
-						"items": [
-							{
-								"item_code": "99998",
-								"item_name": "Cutting / Fitting Charges",
+								"item_code": "I-00262",
+								"item_name": "Item Freight Charges",
 								"qty": 1,
 								"cost_center": row.cost_center,
 								"expense_account": row.account_head,
