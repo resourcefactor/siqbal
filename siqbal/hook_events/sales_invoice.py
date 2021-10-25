@@ -24,7 +24,7 @@ def create_purchase_invoices_against_sales_taxes(si, method):
 				if d.sales_order:
 					sales_order_no = d.sales_order
 		for row in si.taxes:
-			if "5205 - Freight and Forwarding Charges - SIH" in row.account_head and row.tax_amount>0:
+			if "2750 - Freight Payable - SIH" in row.account_head and row.tax_amount>0:
 				purchase_invoice=frappe.get_doc(
 					{
 						'doctype': 'Purchase Invoice',
