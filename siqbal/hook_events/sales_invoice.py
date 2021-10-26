@@ -30,7 +30,7 @@ def create_purchase_invoices_against_sales_taxes(si, method):
 						'doctype': 'Purchase Invoice',
 						"naming_series": "PI-",
 						"remarks": si.name,
-						# "cust_sales_order": sales_order_no,
+						"cust_sales_order": sales_order_no,
 						"docstatus": 1,
 						"discount_amount": 0,
 						"supplier": "S-00006",
