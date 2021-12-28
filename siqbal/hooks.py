@@ -167,12 +167,12 @@ doc_events = {
 	"Stock Reconciliation": {
 		#"validate": "siqbal.utils.validate_date"
 	},
-	"Quotation": {
+	# "Quotation": {
 		#"validate": "siqbal.utils.validate_date"
 	# },
 	# "Journal Entry": {
 	# 	"before_save": "siqbal.hook_events.journal_entry.set_name"
-	}
+	# }
 }
 
 
