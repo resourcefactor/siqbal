@@ -15,9 +15,9 @@ frappe.ui.form.on("Quotation", "validate", function (frm, cdt, cdn) {
 	validateBoxes(frm);
 	// var ret_obj = setseries(frm.doc.company);
 	// frm.set_value("naming_series", ret_obj.series);
-	$.each(frm.doc.items || [], function (i, d) {
-		d.warehouse = ret_obj.twarehouse
-	})
+	// $.each(frm.doc.items || [], function (i, d) {
+	// 	d.warehouse = ret_obj.twarehouse
+	// })
 });
 
 frappe.ui.form.on("Quotation", "refresh", function (frm, cdt, cdn) {
@@ -41,7 +41,7 @@ frappe.ui.form.on('Quotation Item',
 		boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); },
 		qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
 		item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
-		company: cur_frm.cscript.company = function (doc, cdt, cdn) { var ret_obj = setseries(doc.company); cur_frm.set_value("naming_series", ret_obj.series); },
+		// company: cur_frm.cscript.company = function (doc, cdt, cdn) { var ret_obj = setseries(doc.company); cur_frm.set_value("naming_series", ret_obj.series); },
 		item_code: function (frm, cdt, cdn) {
 			frappe.model.set_value(cdt, cdn, "qty", 1);
 			frappe.model.set_value(cdt, cdn, "discount_percentage", 0);
