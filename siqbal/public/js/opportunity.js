@@ -1,7 +1,14 @@
-{% include "SIqbal/public/js/utils.js" %}
+{% include "siqbal/public/js/utils.js" %}
 
 
 frappe.ui.form.on("Opportunity", {
+    refresh: function(frm){
+	    frm.trigger('set_contact_link');
+    },
+    customer_address: function(frm, cdt, cdn) {
+	    frm.trigger('set_contact_link');
+		erpnext.utils.get_address_display(frm, 'customer_address', 'address_display', false);
+	},
 	party_name: function (frm) {
 		var opportunityFrom = frm.doc.opportunity_from;
 		var phoneField;
@@ -40,6 +47,31 @@ frappe.ui.form.on("Opportunity", "refresh", function (frm, cdt, cdn) {
 		set_address_query(frm, frm.doc.party_name);
 	}
 	
+});
+
+frappe.ui.form.on("Opportunity", "save_location", function (frm, cdt, cdn) {
+	if (frm.doc.save_location == 1) {
+		frm.doc.temp_location = frm.doc.location;
+	}
+	frm.doc.save_location = 0;
+	if(frm.doc.temp_location)
+	{
+		frm.doc.location = frm.doc.temp_location;
+	}
+});
+
+frappe.ui.form.on("Opportunity", "onload", function (frm, cdt, cdn) {
+	if(frm.doc.temp_location)
+	{
+		frm.doc.location = frm.doc.temp_location;
+	}
+});
+
+frappe.ui.form.on("Opportunity", "refresh", function (frm, cdt, cdn) {
+	if(frm.doc.temp_location)
+	{
+		frm.doc.location = frm.doc.temp_location;
+	}
 });
 
 frappe.ui.form.on("Opportunity", "validate", function (frm, cdt, cdn) {
