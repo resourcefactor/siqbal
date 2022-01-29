@@ -1,31 +1,31 @@
 {
  "custom_fields": [],
  "custom_perms": [],
- "doctype": "Item Barcode",
+ "doctype": "Sales Invoice Payment",
  "property_setters": [
   {
    "_assign": null,
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-   "creation": "2022-01-24 11:39:44.914195",
+   "creation": "2022-01-25 17:11:39.455898",
    "default_value": null,
-   "doc_type": "Item Barcode",
+   "doc_type": "Sales Invoice Payment",
    "docstatus": 0,
    "doctype_or_field": "DocField",
-   "field_name": "barcode",
+   "field_name": "base_amount",
    "idx": 0,
-   "modified": "2022-01-24 11:39:44.914195",
+   "modified": "2022-01-25 17:11:39.455898",
    "modified_by": "arslan@resourcefactors.com",
-   "name": "Item Barcode-barcode-hidden",
+   "name": "Sales Invoice Payment-base_amount-permlevel",
    "owner": "arslan@resourcefactors.com",
    "parent": null,
    "parentfield": null,
    "parenttype": null,
-   "property": "hidden",
-   "property_type": "Check",
+   "property": "permlevel",
+   "property_type": "Int",
    "row_name": null,
-   "value": "0"
+   "value": null
   }
  ],
  "sync_on_migrate": 1

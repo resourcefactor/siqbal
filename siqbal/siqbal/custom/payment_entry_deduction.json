@@ -1,31 +1,31 @@
 {
  "custom_fields": [],
  "custom_perms": [],
- "doctype": "Item Barcode",
+ "doctype": "Payment Entry Deduction",
  "property_setters": [
   {
    "_assign": null,
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-   "creation": "2022-01-24 11:39:44.914195",
+   "creation": "2022-01-24 11:39:55.727266",
    "default_value": null,
-   "doc_type": "Item Barcode",
+   "doc_type": "Payment Entry Deduction",
    "docstatus": 0,
    "doctype_or_field": "DocField",
-   "field_name": "barcode",
+   "field_name": "cost_center",
    "idx": 0,
-   "modified": "2022-01-24 11:39:44.914195",
+   "modified": "2022-01-24 11:39:55.727266",
    "modified_by": "arslan@resourcefactors.com",
-   "name": "Item Barcode-barcode-hidden",
+   "name": "Payment Entry Deduction-cost_center-default",
    "owner": "arslan@resourcefactors.com",
    "parent": null,
    "parentfield": null,
    "parenttype": null,
-   "property": "hidden",
-   "property_type": "Check",
+   "property": "default",
+   "property_type": "Text",
    "row_name": null,
-   "value": "0"
+   "value": "Main - SIH"
   }
  ],
  "sync_on_migrate": 1

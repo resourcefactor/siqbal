@@ -1,31 +1,31 @@
 {
  "custom_fields": [],
  "custom_perms": [],
- "doctype": "Item Barcode",
+ "doctype": "Attendance",
  "property_setters": [
   {
    "_assign": null,
    "_comments": null,
    "_liked_by": null,
    "_user_tags": null,
-   "creation": "2022-01-24 11:39:44.914195",
+   "creation": "2022-01-24 11:39:55.245002",
    "default_value": null,
-   "doc_type": "Item Barcode",
+   "doc_type": "Attendance",
    "docstatus": 0,
    "doctype_or_field": "DocField",
-   "field_name": "barcode",
+   "field_name": "naming_series",
    "idx": 0,
-   "modified": "2022-01-24 11:39:44.914195",
+   "modified": "2022-01-24 11:39:55.245002",
    "modified_by": "arslan@resourcefactors.com",
-   "name": "Item Barcode-barcode-hidden",
+   "name": "Attendance-naming_series-options",
    "owner": "arslan@resourcefactors.com",
    "parent": null,
    "parentfield": null,
    "parenttype": null,
-   "property": "hidden",
-   "property_type": "Check",
+   "property": "options",
+   "property_type": "Text",
    "row_name": null,
-   "value": "0"
+   "value": "HR-ATT-.YYYY.-"
   }
  ],
  "sync_on_migrate": 1
