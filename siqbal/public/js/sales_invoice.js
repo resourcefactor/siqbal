@@ -58,23 +58,15 @@ frappe.ui.form.on("Sales Invoice", "validate", function (frm, cdt, cdn) {
 		var sales_order_no = "0";
 		// var ret_obj = setseries(frm.doc.company); cur_frm.set_value("naming_series", ret_obj.series);
 	//	if (!frm.doc.custom_delivery_warehouse) { frm.set_value("custom_delivery_warehouse", "Delivery Depot - TC"); }
-		$.each(frm.doc.items || [], function (i, d) {
-			if (d.item_group != 'Fixed Assets') {
-				if (d.qty == 0 || d.rate == 0) {
-					frappe.throw("0 Qty or Rate is not allowed. Please check item " + d.item_code);
-					frappe.validated = false; return;
-				}
-				// if (frm.doc.update_stock) {
-				// 	if (d.qty > d.actual_qty) {
-				// 		frappe.throw("Stock Is not availabe in selected warehouse for item code " + d.item_code);
-				// 		frappe.validated = false; return;
-				// 	}
-				// }
-			}
-			// if (typeof d.sales_order !== "undefined") { sales_order_no = d.sales_order; }
-		//	if (frm.doc.direct_delivery_from_warehouse && frm.doc.custom_delivery_warehouse != "Delivery Depot - TC") { d.warehouse = frm.doc.custom_delivery_warehouse; }
-
-		})
+		
+// 		$.each(frm.doc.items || [], function (i, d) {
+// 			if (d.item_group != 'Fixed Assets') {
+// 				if (d.qty == 0 || d.rate == 0) {
+// 					frappe.throw("0 Qty or Rate is not allowed. Please check item " + d.item_code);
+// 					frappe.validated = false; return;
+// 				}
+// 			}
+// 		})
 
 		$.each(frm.doc.items || [], function (i, d) {
 
