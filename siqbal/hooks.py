@@ -223,3 +223,7 @@ jenv = {
 # 	"Task": "siqbal.task.get_dashboard_data"
 # }
 
+override_doctype_class = {
+	'Sales Invoice': 'siqbal.hook_events.overide_sales_invoice.OverrideSalesInvoice'
+}
+
