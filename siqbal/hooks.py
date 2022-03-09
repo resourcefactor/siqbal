@@ -145,6 +145,7 @@ doc_events = {
 			# "siqbal.hook_events.payment_entry.validate_salaryslip_amount",
 			#"siqbal.utils.validate_date"
 		],
+		"on_update_after_submit": "siqbal.hook_events.payment_entry.validate_sales_order"
 		# "on_submit": "siqbal.hook_events.payment_entry.update_salaryslip_status",
 		# "on_cancel": "siqbal.hook_events.payment_entry.update_salaryslip_status"
 	},
