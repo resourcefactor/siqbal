@@ -1,0 +1,60 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2022-04-19 15:36:01.560646",
+ "disable_prepared_report": 1,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": "Siqbal",
+ "modified": "2022-04-19 15:36:43.039663",
+ "modified_by": "Administrator",
+ "module": "SIqbal",
+ "name": "Pending Sale Order Payments & Delivery",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Sales Order",
+ "report_name": "Pending Sale Order Payments & Delivery",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Maintenance User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Sales Manager TC"
+  },
+  {
+   "role": "Salesman TC"
+  },
+  {
+   "role": "Super user SIH"
+  },
+  {
+   "role": "Update Sales Order"
+  },
+  {
+   "role": "Cashier SI"
+  },
+  {
+   "role": "Warehouse Incharge"
+  },
+  {
+   "role": "Sales Man TS (Submit)"
+  }
+ ]
+}
