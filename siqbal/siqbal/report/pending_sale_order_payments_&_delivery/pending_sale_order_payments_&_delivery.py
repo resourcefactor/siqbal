@@ -76,21 +76,28 @@ def get_data(filters):
 		so.transaction_date,
 		so.name,
 		so.customer_name,
-		so.rounded_total,
 		
 		(select
 		sum(si1.rounded_total)
 		from `tabSales Invoice` as si1
 		where si1.docstatus=1 and si1.cust_sales_order_number = so.name
 		group by si1.cust_sales_order_number) as rounded_total_si,
-		
+
 		(select
 		sum(si2.rounded_total)
 		from `tabSales Invoice` as si2
 		where si2.docstatus=1 and si2.is_return=1 and si2.cust_sales_order_number = so.name
 		group by si2.cust_sales_order_number) as return_amount,
 
-		so.advance_paid
+		(select
+		sum(pe.paid_amount)
+		from `tabPayment Entry` as pe
+		left join `tabPayment Entry Reference` per on per.parent = pe.name
+		where pe.docstatus=1 and per.reference_name = so.name
+		group by per.reference_name) as payment,
+		
+		so.rounded_total
+
 		from `tabSales Order` as so
 		where so.docstatus = 1 and so.status != 'Closed'"""
 
@@ -113,8 +120,8 @@ def get_data(filters):
 			"order_amount": row.rounded_total,
 			"delivery_amount": row.rounded_total_si,
 			"return_amount": row.return_amount,
-			"payment": row.advance_paid,
-			"pending_payment": (row.rounded_total_si if row.rounded_total_si else 0) - (-(row.return_amount) if row.return_amount else 0) - (row.advance_paid if row.advance_paid else 0),
+			"payment": row.payment,
+			"pending_payment": (row.rounded_total_si if row.rounded_total_si else 0) - (-(row.return_amount) if row.return_amount else 0) - (row.payment if row.payment else 0),
 			"pending_delivery": (row.rounded_total if row.rounded_total else 0) - (row.rounded_total_si if row.rounded_total_si else 0) - (-(row.return_amount) if row.return_amount else 0)
 		}
 		data.append(row)
