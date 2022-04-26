@@ -225,6 +225,7 @@ jenv = {
 # }
 
 override_doctype_class = {
-	'Sales Invoice': 'siqbal.hook_events.overide_sales_invoice.OverrideSalesInvoice'
+	'Sales Invoice': 'siqbal.hook_events.overide_sales_invoice.OverrideSalesInvoice',
+	'Purchase Invoice': 'siqbal.hook_events.override_purchase_invoice.OverridePurchaseInvoice'
 }
 
