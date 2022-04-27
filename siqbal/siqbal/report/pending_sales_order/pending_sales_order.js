@@ -6,21 +6,14 @@
 frappe.query_reports["Pending Sales Order"] = {
 	"filters": [
 		{
-			"fieldname": "company",
-			"label": __("Company"),
-			"fieldtype": "Link",
-			"options": "Company",
-			"reqd": 1
-		},
-		{
-			"fieldname": "fdate",
+			"fieldname": "from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
 			"default": get_today(),
 			"reqd": 1
 		},
 		{
-			"fieldname": "tdate",
+			"fieldname": "to_date",
 			"label": __("To Date"),
 			"fieldtype": "Date",
 			"default": get_today(),
