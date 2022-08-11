@@ -65,7 +65,7 @@ def execute(filters=None):
 		inner join `tabSales Order` so
 			on (gle.against_voucher_type='Sales Order' and gle.against_voucher=so.name)
 		where voucher_no != against_voucher and so.transaction_date between %(fdate)s and %(tdate)s
-		and so.company = %(company)s and so.docstatus=1 and so.status not in ('Closed') {0}
+		and so.company = %(company)s and so.docstatus=1 and gle.is_cancelled = 0 and so.status not in ('Closed') {0}
 
 		union all
 
@@ -75,10 +75,10 @@ def execute(filters=None):
 		from `tabGL Entry` gle
 		inner join `tabSales Order` so
 			on ((gle.against_voucher_type='Sales Invoice')
-			 and gle.against_voucher in
-			 (select distinct si.parent from `tabSales Invoice Item` si where si.sales_order=so.name )
+			and gle.against_voucher in
+			(select distinct si.parent from `tabSales Invoice Item` si where si.sales_order=so.name )
 		  )
-		where voucher_no != against_voucher  and so.transaction_date between %(fdate)s and %(tdate)s
+		where voucher_no != against_voucher and gle.is_cancelled = 0 and so.transaction_date between %(fdate)s and %(tdate)s
 		and so.company = %(company)s and so.docstatus=1 and so.status not in ('Closed') {0}
 	""".format(customer_filter), filters, as_dict=1)
 	order_gle = {}
