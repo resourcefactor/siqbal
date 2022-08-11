@@ -22,11 +22,6 @@ frappe.ui.form.on("Payment Entry", {
 			// cur_frm.set_value("naming_series", ret_obj.series);
 		}
 	},
-	before_submit: function (frm) {
-		if (frm.doc.unallocated_amount != 0) {
-			frappe.throw("Unallocated should be 0");
-		}
-	},
 	company: function (frm) {
 		// var ret_obj = setseries(frm.doc.company);
 		// frm.set_value("naming_series", ret_obj.series);
