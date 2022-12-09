@@ -19,13 +19,13 @@ def update_reserved_qty(si, method):
 def create_purchase_invoices_against_sales_taxes(si, method):
 	if si.update_stock:
 		sales_order_no = ""
-		if(si.doctype == "Sales Invoice"):
+		if si.doctype == "Sales Invoice":
 			for d in si.items:
 				if d.sales_order:
 					sales_order_no = d.sales_order
 		for row in si.taxes:
-			if "2750 - Freight Payable - SIH" in row.account_head and row.tax_amount>0:
-				purchase_invoice=frappe.get_doc(
+			if "2750 - Freight Payable - SIH" in row.account_head and row.tax_amount > 0:
+				purchase_invoice = frappe.get_doc(
 					{
 						'doctype': 'Purchase Invoice',
 						"naming_series": "PI-",
@@ -57,7 +57,7 @@ def create_purchase_invoices_against_sales_taxes(si, method):
 						]
 
 					})
-				purchase_invoice.insert(ignore_permissions = True)
+				purchase_invoice.insert(ignore_permissions=True)
 				frappe.msgprint("Purchase Invoice has been Created.")
 
 
@@ -69,15 +69,13 @@ def validate_discount_while_return(si, method):
 		payment_entries_names = set()
 
 		pe = frappe.db.sql("""select t1.name, t1.paid_amount
-						from `tabPayment Entry` t1, `tabPayment Entry Reference` t2
-						where
-						t1.name = t2.parent and t1.docstatus = 1
-						and t1.mode_of_payment = %s
-						and t2.reference_doctype in ("Sales Order", "Sales Invoice")
-						and t2.reference_name in %s""",
-						("Discount", (sales_order, sales_invoice)),
-						as_dict=1
-						)
+					from `tabPayment Entry` t1, `tabPayment Entry Reference` t2
+					where
+					t1.name = t2.parent and t1.docstatus = 1
+					and t1.mode_of_payment = %s
+					and t2.reference_doctype in ("Sales Order", "Sales Invoice")
+					and t2.reference_name in %s
+				""", ("Discount", (sales_order, sales_invoice)), as_dict=1)
 		for p in pe:
 			payment_entries_names.add(p['name'])
 
@@ -94,17 +92,15 @@ def validate_discount_while_return(si, method):
 
 def validate_user_warehouse(si, method):
 	if si.update_stock:
-		user_warehouse = frappe.db.get_value("User",{"name": frappe.session['user']}, "user_warehouse")
-		if si.is_return and not si.approval_receive_in_breakage :
+		user_warehouse = frappe.db.get_value("User", {"name": frappe.session['user']}, "user_warehouse")
+		if si.is_return and not si.approval_receive_in_breakage:
 			for item in si.items:
 				if not (item.warehouse in user_warehouse):
-					frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>")
-					.format(item.warehouse,item.item_code))
+					frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>").format(item.warehouse, item.item_code))
 		else:
 			for item in si.items:
-				if not (item.warehouse in user_warehouse or item.warehouse in (user_warehouse.replace("Normal","Breakage")) or item.warehouse in (user_warehouse.replace("Depot","Breakage"))):
-					frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>")
-					.format(item.warehouse,item.item_code))
+				if not (item.warehouse in user_warehouse or item.warehouse in (user_warehouse.replace("Normal", "Breakage")) or item.warehouse in (user_warehouse.replace("Depot", "Breakage"))):
+					frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>").format(item.warehouse, item.item_code))
 
 
 def validate_taxes_and_charges_from_so(si, method):
@@ -119,8 +115,7 @@ def validate_taxes_and_charges_from_so(si, method):
 					frappe.throw(_("Row #{0}: {1} could not be found in Sales Order").format(d.idx, d.description))
 
 				if d.tax_amount > tax_balance[d.account_head]:
-					frappe.throw(_("Row #{0}: {1} can not be greater than remaining amount of {2}")
-						.format(d.idx, d.description, tax_balance[d.account_head]))
+					frappe.throw(_("Row #{0}: {1} can not be greater than remaining amount of {2}").format(d.idx, d.description, tax_balance[d.account_head]))
 
 
 def get_remaining_taxes_and_charges_amount(self, for_validate):
@@ -207,6 +202,7 @@ def split_invoice_between_warehouse(source_name):
 
 	frappe.msgprint(_("Sales Invoices ({0}) created".format(", ".join(doc_list))))
 
+
 @frappe.whitelist()
 def validate_sales_invoice(sl, method):
 	if not sl.return_against and not sl.is_return:
@@ -218,7 +214,7 @@ def validate_sales_invoice(sl, method):
 					# paid_amt = sales_order.advance_paid
 					paid_amt = 0
 					query = """select sum(rounded_total) - sum(outstanding_amount) as rounded_total
-							from `tabSales Invoice` where name in (select distinct parent from  
+							from `tabSales Invoice` where name in (select distinct parent from
 							`tabSales Invoice Item` where sales_order is not null and sales_order = '{0}')
 							and docstatus in (0,1)""".format(sales_order.name)
 
@@ -230,9 +226,9 @@ def validate_sales_invoice(sl, method):
 							bill_amt = float(result[0][0])
 					paid_query = """select sum(per.allocated_amount) as paid_amt from `tabPayment Entry Reference` as per
 								inner join `tabPayment Entry` as pe on pe.name = per.parent
-								where per.reference_doctype = 'Sales Invoice' and pe.docstatus = 1 and pe.payment_type = 'Receive' 
+								where per.reference_doctype = 'Sales Invoice' and pe.docstatus = 1 and pe.payment_type = 'Receive'
 								and per.sales_order = '{0}' """.format(sales_order.name)
-									
+
 					result = frappe.db.sql(paid_query, as_list=True)
 					if result:
 						if result[0][0]:
@@ -240,7 +236,7 @@ def validate_sales_invoice(sl, method):
 
 					paid_query1 = """select sum(per.allocated_amount) as paid_amt from `tabPayment Entry Reference` as per
 								inner join `tabPayment Entry` as pe on pe.name = per.parent
-								where per.reference_doctype = 'Sales Order' and  pe.docstatus = 1 and pe.payment_type = 'Receive' 
+								where per.reference_doctype = 'Sales Order' and  pe.docstatus = 1 and pe.payment_type = 'Receive'
 								and per.reference_name = '{0}' """.format(sales_order.name)
 
 					result1 = frappe.db.sql(paid_query1, as_list=True)
