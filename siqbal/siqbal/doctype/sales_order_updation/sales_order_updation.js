@@ -21,11 +21,6 @@ frappe.ui.form.on('Sales Order Updation', {
 	},
 	update_items_btn: function (frm) {
 		if (validateQty(frm) != false) {
-			// if (Math.abs(frm.doc.difference) > 5.00) {
-			// 	frappe.throw(__("The new total of the items should not exceed the difference of amount 5."));
-			// 	return false;
-			// }
-
 			frappe.call({
 				method: 'siqbal.utils.get_sales_order_items',
 				freeze: true,
@@ -48,7 +43,15 @@ frappe.ui.form.on('Sales Order Updation', {
 								'child_docname': "items"
 							},
 							callback: function() {
-								frappe.set_route("Form", "Sales Order", frm.doc.sales_order);
+							    frappe.call({
+                                    method: 'siqbal.siqbal.doctype.sales_order_updation.sales_order_updation.update_sales_order',
+                                    args: {
+                                        'order_id': frm.doc.sales_order
+                                    },
+                                    callback: function() {
+                                        frappe.set_route("Form", "Sales Order", frm.doc.sales_order);
+                                    }
+                                });
 							}
 						});
 					}
@@ -104,7 +107,6 @@ function calculateNewTotal(frm) {
 		newTotal += item.qty * item.rate;
 	});
 	frm.set_value("new_total", newTotal.toFixed(2));
-	// frm.set_value("difference", String((frm.doc.total - (newTotal).toFixed(2)).toFixed(2)));
 }
 
 function loadItems(frm) {

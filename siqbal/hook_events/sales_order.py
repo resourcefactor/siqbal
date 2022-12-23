@@ -1,8 +1,9 @@
 import frappe
 from frappe import _
-from frappe.utils import cint, flt, getdate
+from frappe.utils import cint, flt
 from frappe.model.mapper import get_mapped_doc
 import math
+
 
 def unset_needs_approval(so, method):
 	frappe.get_doc('Authorization Control').validate_approving_authority(so.doctype, so.company, so.base_grand_total, so)
@@ -14,8 +15,8 @@ def unset_needs_approval(so, method):
 
 
 def validate_items_rate_and_update_boxes(so, method):
-	saved_item_rows = frappe.get_all("Sales Order Item", fields=["name"], filters = {"parent": so.name, "docstatus": 1})
-	items_changed = len(saved_item_rows)!=len(so.items)
+	saved_item_rows = frappe.get_all("Sales Order Item", fields=["name"], filters={"parent": so.name, "docstatus": 1})
+	items_changed = len(saved_item_rows) != len(so.items)
 
 	if items_changed:
 		set_boxes_in_items(so)
@@ -58,15 +59,8 @@ def set_total_boxes(so):
 def check_to_allow_delivery(so, to_create):
 	so = frappe.get_doc("Sales Order", so)
 
-	# if to_create == "Material Request":
-	# 	if (not so.allow_delivery and so.advance_paid < so.rounded_total):
-	# 		frappe.throw(_('Not allowed to create the Material Request before Payment'))
-
 	if to_create == "Sales Invoice":
 		if not so.allow_delivery:
-			# if so.advance_paid < so.rounded_total:
-			# 	frappe.throw(_('Not allowed to create the Sales Invoice before Payment'))
-			# else:
 			cheque_payments = frappe.db.sql("""
 				select pe.name
 				from `tabPayment Entry Reference` pref
@@ -115,7 +109,7 @@ def set_average_valuation_rate(so, method):
 
 @frappe.whitelist()
 def make_so_updation(source_name, target_doc=None):
-	return get_mapped_doc("Sales Order", source_name, 	{
+	return get_mapped_doc("Sales Order", source_name, {
 		"Sales Order": {
 			"doctype": "Sales Order Updation",
 			"validation": {
