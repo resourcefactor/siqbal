@@ -4,14 +4,6 @@ frappe.provide('siqbal.selling');
 
 
 frappe.ui.form.on("Sales Order", {
-	onload: function (frm) {
-		set_address_query(frm, frm.doc.customer);
-	},
-	delivery_date: function (frm) {
-		if (frm.doc.docstatus == 0) {
-			$.each(frm.doc.items || [], function (i, d) { d.delivery_date = frm.doc.delivery_date; })
-		}
-	},
 	refresh: function (frm) {
 		set_address_query(frm, frm.doc.customer);
 		if (frm.doc.docstatus == 0 && frm.doc.company) {
@@ -19,12 +11,12 @@ frappe.ui.form.on("Sales Order", {
 				set_total_qty(frm, d.doctype, d.name, d.item_code);
 			})
 		}
-		
-		frm.remove_custom_button(__('Update Items'));
+
+		frm.remove_custom_button(__('Update Items1'));
 		if (frappe.user.has_role('Update Sales Order')) {
 			if (frm.doc.docstatus === 1 && frm.doc.status !== 'Closed'
 				&& flt(frm.doc.per_delivered, 6) < 100 && flt(frm.doc.per_billed, 6) < 100) {
-				frm.add_custom_button(__('Update Items'), () => {
+				frm.add_custom_button(__('Update Items1'), () => {
 					frappe.model.open_mapped_doc({
 						method: "siqbal.hook_events.sales_order.make_so_updation",
 						frm: cur_frm
@@ -32,39 +24,61 @@ frappe.ui.form.on("Sales Order", {
 				});
 			}
 		}
-	}
-});
-frappe.ui.form.on("Sales Order", "onload", function (frm, cdt, cdn) {
-	setup_warehouse_query('warehouse', frm);
-	if (frm.doc.docstatus == 0) {
-		calculate_total_boxes(frm);
-		$.each(frm.doc.items || [], function (i, d) {
-			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-			if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+	},
+	onload: function (frm) {
+		set_address_query(frm, frm.doc.customer);
+		setup_warehouse_query('warehouse', frm);
+		if (frm.doc.docstatus == 0) {
+			calculate_total_boxes(frm);
+			frappe.call({
+				method: "frappe.client.get",
+				args: {
+					doctype: "User",
+					filters: { "name": frappe.session.user },
+					fieldname: "user_costcenter"
+				},
+				callback: function (r) {
+					if (r.message.user_costcenter) {
+						frm.set_value('cost_center', r.message.user_costcenter);
+						frappe.model.set_value(cdt, cdn, 'cost_center', r.message.user_costcenter);
+					}
+				}
+			})
 
-		})
-	}
-});
+			$.each(frm.doc.items || [], function (i, d) {
+				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 
-frappe.ui.form.on("Sales Order", "validate", function (frm, cdt, cdn) {
-	if (frm.doc.delivery_date < frm.doc.transaction_date){
-		frappe.throw(__("Expected Delivery Date should be after the transaction date"));
-	}
-	if (frm.doc.docstatus == 0) {
-		calculate_total_boxes(frm);
-		frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());
-		if (frm.doc.title)
-			frm.set_value("title", frm.doc.title.toUpperCase());
+			})
+		}
+	},
+	validate: function (frm, cdt, cdn) {
+		if (frm.doc.delivery_date < frm.doc.transaction_date) {
+			frappe.throw(__("Expected Delivery Date should be after the transaction date"));
+		}
+		if (frm.doc.docstatus == 0) {
+			calculate_total_boxes(frm);
+			frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());
+			if (frm.doc.title)
+				frm.set_value("title", frm.doc.title.toUpperCase());
 
-		$.each(frm.doc.taxes || [], function (i, d) {
-			d.cost_center = frm.doc.cost_center;
-		})
-		$.each(frm.doc.items || [], function (i, d) {
-			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-			if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-		})
-		validateBoxes(frm);
-	}
+			$.each(frm.doc.taxes || [], function (i, d) {
+				d.cost_center = frm.doc.cost_center;
+			});
+			$.each(frm.doc.items || [], function (i, d) {
+				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+				d.cost_center = frm.doc.cost_center;
+			});
+			validateBoxes(frm);
+		}
+	},
+	delivery_date: function (frm) {
+		if (frm.doc.docstatus == 0) {
+			$.each(frm.doc.items || [], function (i, d) { d.delivery_date = frm.doc.delivery_date; })
+		}
+	},
+	
 });
 
 frappe.ui.form.on('Sales Order Item',
@@ -82,36 +96,22 @@ frappe.ui.form.on('Sales Order Item',
 		}
 	})
 
-function get_approval_limit(crow) {
-	frappe.call({
-		method: "frappe.client.get_list",
-		args: {
-			doctype: "Authorization Rule",
-			filters: { "master_name": crow.item_group },
-			fields: ["value", "approving_role"]
-		},
-		callback: function (r) {
-			for (var i = 0; i < r.message.length; i++) {
-				if (r.message[i].value && r.message[i].approving_role.includes('Sales Manager')) {
-					crow.sales_manager_limit = r.message[i].value.toFixed(0);
-				}
-				if (r.message[i].value && r.message[i].approving_role.includes('Director')) {
-					crow.director_limit = r.message[i].value.toFixed(0);
-				}
-			}
-		}
-	})
-}
-
 siqbal.selling.SalesOrderController = erpnext.selling.SalesOrderController.extend({
 	onload: function (doc, dt, dn) {
 		this._super();
 	},
-	
 	refresh: function (doc, dt, dn) {
 		this._super(doc);
 		var me = this;
-		let allow_delivery = false;
+		if (this.frm.doc.docstatus === 1 && this.frm.doc.status !== 'Closed'
+			&& flt(this.frm.doc.per_delivered, 6) < 100 && flt(this.frm.doc.per_billed, 6) < 100) {
+			this.frm.add_custom_button(__('Update Items'), () => {
+				frappe.model.open_mapped_doc({
+					method: "siqbal.hook_events.sales_order.make_so_updation",
+					frm: cur_frm
+				})
+			});
+		}
 		me.make_sales_invoice = this.ts_make_sales_invoice
 		me.make_material_request = this.ts_make_material_request;
 		me.make_delivery_note_based_on_delivery_date = this.ts_make_delivery_note_based_on_delivery_date;
