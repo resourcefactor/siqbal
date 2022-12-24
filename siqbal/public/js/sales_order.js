@@ -11,6 +11,14 @@ frappe.ui.form.on("Sales Order", {
 				set_total_qty(frm, d.doctype, d.name, d.item_code);
 			})
 		}
+		if (frm.doc.docstatus === 1 && frm.doc.status !== 'Closed' && flt(frm.doc.per_delivered, 6) < 100 && flt(frm.doc.per_billed, 6) < 100) {
+			frm.add_custom_button(__('Update Items'), () => {
+				frappe.model.open_mapped_doc({
+					method: "siqbal.hook_events.sales_order.make_so_updation",
+					frm: cur_frm
+				});
+			});
+		}
 	},
 	onload: function (frm) {
 		set_address_query(frm, frm.doc.customer);
@@ -90,15 +98,6 @@ siqbal.selling.SalesOrderController = erpnext.selling.SalesOrderController.exten
 	refresh: function (doc, dt, dn) {
 		this._super(doc);
 		var me = this;
-		if (this.frm.doc.docstatus === 1 && this.frm.doc.status !== 'Closed'
-			&& flt(this.frm.doc.per_delivered, 6) < 100 && flt(this.frm.doc.per_billed, 6) < 100) {
-			this.frm.add_custom_button(__('Update Items'), () => {
-				frappe.model.open_mapped_doc({
-					method: "siqbal.hook_events.sales_order.make_so_updation",
-					frm: cur_frm
-				})
-			});
-		}
 		me.make_sales_invoice = this.ts_make_sales_invoice
 		me.make_material_request = this.ts_make_material_request;
 		me.make_delivery_note_based_on_delivery_date = this.ts_make_delivery_note_based_on_delivery_date;
