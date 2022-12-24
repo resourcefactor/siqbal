@@ -11,19 +11,6 @@ frappe.ui.form.on("Sales Order", {
 				set_total_qty(frm, d.doctype, d.name, d.item_code);
 			})
 		}
-
-		frm.remove_custom_button(__('Update Items1'));
-		if (frappe.user.has_role('Update Sales Order')) {
-			if (frm.doc.docstatus === 1 && frm.doc.status !== 'Closed'
-				&& flt(frm.doc.per_delivered, 6) < 100 && flt(frm.doc.per_billed, 6) < 100) {
-				frm.add_custom_button(__('Update Items1'), () => {
-					frappe.model.open_mapped_doc({
-						method: "siqbal.hook_events.sales_order.make_so_updation",
-						frm: cur_frm
-					})
-				});
-			}
-		}
 	},
 	onload: function (frm) {
 		set_address_query(frm, frm.doc.customer);
