@@ -11,6 +11,7 @@ frappe.ui.form.on("Sales Order", {
 				set_total_qty(frm, d.doctype, d.name, d.item_code);
 			})
 		}
+		frm.remove_custom_button(__('Update Items'));
 		if (frm.doc.docstatus === 1 && frm.doc.status !== 'Closed' && flt(frm.doc.per_delivered, 6) < 100 && flt(frm.doc.per_billed, 6) < 100) {
 			frm.add_custom_button(__('Update Items'), () => {
 				frappe.model.open_mapped_doc({
