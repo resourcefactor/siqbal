@@ -22,6 +22,10 @@ frappe.ui.form.on('Sales Order Updation', {
 	},
 	update_items_btn: function (frm) {
 		if (validateQty(frm) != false) {
+			if (Math.abs(frm.doc.difference) > 5.00) {
+				frappe.throw(__("The new total of the items should not exceed the difference of amount 5."));
+				return false;
+			}
 			frappe.call({
 				method: 'siqbal.utils.get_sales_order_items',
 				freeze: true,
