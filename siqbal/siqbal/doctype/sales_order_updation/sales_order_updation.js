@@ -110,6 +110,7 @@ function calculateNewTotal(frm) {
 		newTotal += item.qty * item.rate;
 	});
 	frm.set_value("new_total", newTotal.toFixed(2));
+	frm.set_value("difference", String((frm.doc.total - (newTotal).toFixed(2)).toFixed(2)));
 }
 
 function loadItems(frm) {
