@@ -7,6 +7,7 @@ frappe.ui.form.on('Sales Order Updation', {
 		frm.disable_save();
 		var deleteRowButtonWrapper = $('*[data-fieldname="items"]');
 		deleteRowButtonWrapper.find('.grid-remove-rows').hide();
+		loadItems(frm);
 	},
 	sales_order: function (frm) {
 		loadItems(frm);
@@ -43,15 +44,13 @@ frappe.ui.form.on('Sales Order Updation', {
 								'child_docname': "items"
 							},
 							callback: function() {
-							    frappe.call({
-                                    method: 'siqbal.siqbal.doctype.sales_order_updation.sales_order_updation.update_sales_order',
-                                    args: {
-                                        'order_id': frm.doc.sales_order
-                                    },
-                                    callback: function() {
-                                        frappe.set_route("Form", "Sales Order", frm.doc.sales_order);
-                                    }
-                                });
+								frappe.call({
+									doc: frm.doc,
+									method: 'update_sales_order',
+									callback: function() {
+										frappe.set_route("Form", "Sales Order", frm.doc.sales_order);
+									}
+								});
 							}
 						});
 					}
