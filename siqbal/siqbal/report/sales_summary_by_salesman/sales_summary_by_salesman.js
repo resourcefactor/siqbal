@@ -5,27 +5,27 @@
 
 frappe.query_reports["Sales Summary By Salesman"] = {
 	"filters": [
-        {
-            "fieldname":"company",
-            "label": __("Company"),
-            "fieldtype": "Link",
-	     "options":"Company",
-		"default":frappe.user_defaults.company,
-		"reqd": 1
-        },
-	{
-            "fieldname":"fdate",
-            "label": __("From Date"),
-            "fieldtype": "Date",
-	     "default": get_today(),
-            "reqd": 1
-        } ,
-	{
-            "fieldname":"tdate",
-            "label": __("To Date"),
-            "fieldtype": "Date",
-	     "default": get_today(),
-            "reqd": 1
-        }
-    ]
+		{
+			"fieldname":"company",
+			"label": __("Company"),
+			"fieldtype": "Link",
+			"options":"Company",
+			"default":frappe.user_defaults.company,
+			"reqd": 1
+		},
+		{
+			"fieldname":"fdate",
+			"label": __("From Date"),
+			"fieldtype": "Date",
+			"default": get_today(),
+			"reqd": 1
+		},
+		{
+			"fieldname":"tdate",
+			"label": __("To Date"),
+			"fieldtype": "Date",
+			"default": get_today(),
+			"reqd": 1
+		}
+	]
 }
