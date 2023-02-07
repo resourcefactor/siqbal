@@ -21,60 +21,58 @@ frappe.ui.form.on("Sales Order", {
 			});
 		}
 	},
-	onload: function (frm) {
-		set_address_query(frm, frm.doc.customer);
-		setup_warehouse_query('warehouse', frm);
-		if (frm.doc.docstatus == 0) {
-			calculate_total_boxes(frm);
-			frappe.call({
-				method: "frappe.client.get",
-				args: {
-					doctype: "User",
-					filters: { "name": frappe.session.user },
-					fieldname: "user_costcenter"
-				},
-				callback: function (r) {
-					if (r.message.user_costcenter) {
-						frm.set_value('cost_center', r.message.user_costcenter);
-						frappe.model.set_value(cdt, cdn, 'cost_center', r.message.user_costcenter);
-					}
-				}
-			})
-
-			$.each(frm.doc.items || [], function (i, d) {
-				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-
-			})
-		}
-	},
-	validate: function (frm, cdt, cdn) {
-		if (frm.doc.delivery_date < frm.doc.transaction_date) {
-			frappe.throw(__("Expected Delivery Date should be after the transaction date"));
-		}
-		if (frm.doc.docstatus == 0) {
-			calculate_total_boxes(frm);
-			frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());
-			if (frm.doc.title)
-				frm.set_value("title", frm.doc.title.toUpperCase());
-
-			$.each(frm.doc.taxes || [], function (i, d) {
-				d.cost_center = frm.doc.cost_center;
-			});
-			$.each(frm.doc.items || [], function (i, d) {
-				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-				d.cost_center = frm.doc.cost_center;
-			});
-			validateBoxes(frm);
-		}
-	},
 	delivery_date: function (frm) {
 		if (frm.doc.docstatus == 0) {
 			$.each(frm.doc.items || [], function (i, d) { d.delivery_date = frm.doc.delivery_date; })
 		}
 	},
-	
+
+});
+
+frappe.ui.form.on("Sales Order", "onload", function (frm, cdt, cdn) {
+	setup_warehouse_query('warehouse', frm);
+	if (frm.doc.docstatus == 0) {
+		calculate_total_boxes(frm);
+		frappe.call({
+			method: "frappe.client.get",
+			args: {
+				doctype: "User",
+				filters: { "name": frappe.session.user },
+				fieldname: "user_costcenter"
+			},
+			callback: function (r) {
+				if (r.message.user_costcenter) {
+					frm.set_value('cost_center', r.message.user_costcenter);
+					frappe.model.set_value(cdt, cdn, 'cost_center', r.message.user_costcenter);
+				}
+			}
+		})
+		$.each(frm.doc.items || [], function (i, d) {
+			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+			if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+		})
+	}
+});
+
+frappe.ui.form.on("Sales Order", "validate", function (frm, cdt, cdn) {
+	if (frm.doc.delivery_date < frm.doc.transaction_date){
+		frappe.throw(__("Expected Delivery Date should be after the transaction date"));
+	}
+	if (frm.doc.docstatus == 0) {
+		calculate_total_boxes(frm);
+		frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());
+		if (frm.doc.title)
+			frm.set_value("title", frm.doc.title.toUpperCase());
+		$.each(frm.doc.taxes || [], function (i, d) {
+			d.cost_center = frm.doc.cost_center;
+		})
+		$.each(frm.doc.items || [], function (i, d) {
+			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+			if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+			d.cost_center = frm.doc.cost_center;
+		})
+		validateBoxes(frm);
+	}
 });
 
 frappe.ui.form.on('Sales Order Item',
