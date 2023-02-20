@@ -62,7 +62,7 @@ frappe.ui.form.on(cur_frm.doctype, {
 		// frappe.custom_mutli_add_dialog(this.frm).show();
 		let multi_item_dialog = frappe.custom_mutli_add_dialog(frm);
 		multi_item_dialog.show();
-		multi_item_dialog.$wrapper.find('.modal-dialog').css("width", "960px");
+		multi_item_dialog.$wrapper.find('.modal-dialog').css("max-width", "1260px");
 	},
 
 	validate: function (frm) {
@@ -93,7 +93,6 @@ frappe.custom_mutli_add_dialog = function (frm) {
 				<th style="width: 80px" >Avail. Qty</th>
 				<th style="width: 180px" colspan="3">Present Qty</th>
 				<th style="width: 180px" colspan="3">Reserved Qty</th>
-
 			</tr>
 			<tr>
 				<th>SQM</th>
@@ -304,7 +303,6 @@ frappe.custom_mutli_add_dialog = function (frm) {
 						<td>${flt(reserved_qty_sqm, 3)}</td>
 						<td>${flt(reserved_qty_box, 3) || 0}</td>
 						<td>${flt(reserved_qty_pieces, 3) || 0}</td>
-
 					</tr>
 					`;
 				}
