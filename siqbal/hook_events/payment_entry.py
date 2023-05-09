@@ -32,3 +32,12 @@ def validate_sales_order(pe, method):
 # 	if pe.salary_slip_id:
 # 		frappe.db.sql("""update `tabSalary Slip` set payment_status =%s
 # 				where name=%s""",(slipsatus,pe.salary_slip_id))
+
+
+def update_sales_order_name(pe, method):
+	for ref in pe.references:
+		if ref.sales_order:
+			so_owner = frappe.db.get_value("Sales Order", ref.sales_order, "owner")
+			if so_owner:
+				ref.cust_sales_order_owner = so_owner
+		ref.db_update()
