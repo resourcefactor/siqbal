@@ -16,7 +16,7 @@ frappe.ui.form.on("Sales Invoice", {
 			// 	}
 			// }
 			$.each(frm.doc.items || [], function (i, d) {
-				if (!frm.doc.cust_sales_order_owner) {
+				if (!frm.doc.sales_order_owner) {
 					get_sales_order_owner(d.sales_order);
 				}
 				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }

@@ -133,7 +133,10 @@ doc_events = {
 	},
 	"Payment Entry": {
 		"validate": "siqbal.hook_events.payment_entry.validate_sales_order",
-		"on_update_after_submit": "siqbal.hook_events.payment_entry.validate_sales_order"
+		"on_update_after_submit": [
+            "siqbal.hook_events.payment_entry.validate_sales_order",
+            "siqbal.hook_events.payment_entry.update_sales_order_name"
+		]
 	},
 	"Stock Entry": {
 		"on_submit": "siqbal.hook_events.stock_entry.validate_user_warehouse"
