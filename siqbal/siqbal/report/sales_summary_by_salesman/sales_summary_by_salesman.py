@@ -40,7 +40,7 @@ def get_data(filters):
 
 		left join
 
-		(select ts.cost_center,sales_order_owner, abs(sum(tsi.net_amount)) as sales_return from `tabSales Invoice` ts inner join `tabSales Invoice Item` tsi on ts.name=tsi.parent where is_return=1 and ts.docstatus=1 and company= %(company)s and ts.posting_date>=%(fdate)s and ts.posting_date<=%(tdate)s group by ts.sales_order_owner) tsr
+		(select tc.cost_center,sales_order_owner, abs(sum(tsi.net_amount)) as sales_return from `tabSales Invoice` tc inner join `tabSales Invoice Item` tsi on tc.name=tsi.parent where is_return=1 and tc.docstatus=1 and company= %(company)s and tc.posting_date>=%(fdate)s and tc.posting_date<=%(tdate)s group by tc.sales_order_owner) tsr
 
 		on tsm.salesman=tsr.sales_order_owner left join
 
