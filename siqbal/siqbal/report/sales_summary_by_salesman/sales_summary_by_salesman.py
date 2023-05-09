@@ -21,7 +21,7 @@ def get_data(filters):
 		ifnull(canceld_sale,0),
 		ifnull(sales_return,0),
 		ifnull(old_system_return,0),
-		(ifnull(rounded_total,0)-ifnull(canceld_sale,0)-ifnull(sales_return,0)-ifnull(old_system_return,0)),
+		(ifnull(rounded_total,0)-ifnull(sales_return,0)-ifnull(old_system_return,0)),
 		ifnull(cash_sale,0),
 		ifnull(credit_sale,0),
 		ifnull(Recovery,0)
@@ -32,7 +32,7 @@ def get_data(filters):
 		sum(if(customer_group="Cash Customer",rounded_total,0)) as cash_sale,
 		sum(if(customer_group="Credit Customer",rounded_total,0)) as credit_sale,
 		owner
-		from `tabSales Order` where docstatus>=1 and company= %(company)s and transaction_date>=%(fdate)s and transaction_date<=%(tdate)s group by owner)
+		from `tabSales Order` where docstatus=1 and company= %(company)s and transaction_date>=%(fdate)s and transaction_date<=%(tdate)s group by owner)
 
 		tso on tsm.salesman = tso.owner left join
 
