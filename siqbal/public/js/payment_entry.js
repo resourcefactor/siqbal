@@ -112,7 +112,7 @@ function get_sales_order_owner(doctype, docnumber, row) {
 		fieldfetch = "owner";
 	}
 	if (doctype == "Sales Invoice") {
-		fieldfetch = "cust_sales_order_owner";
+		fieldfetch = "sales_order_owner";
 	}
 	frappe.call({
 		method: "frappe.client.get",
@@ -126,8 +126,10 @@ function get_sales_order_owner(doctype, docnumber, row) {
 				row.cust_sales_order_owner = r.message.owner;
 			}
 			if (doctype == "Sales Invoice") {
-				row.cust_sales_order_owner = r.message.cust_sales_order_owner;
+				row.cust_sales_order_owner = r.message.sales_order_owner;
+				// frappe.model.set_value(row.doctype, row.name, "cust_sales_order_owner", r.message.sales_order_owner);
 			}
+			// cur_frm.save_or_update();
 		}
 	});
 }
