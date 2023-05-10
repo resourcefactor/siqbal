@@ -1,10 +1,16 @@
 {% include "siqbal/public/js/utils.js" %}
+{% include "siqbal/public/js/sms_manager.js" %}
 
 frappe.ui.form.on("Sales Invoice", {
 	refresh: function (frm, cdt, cdn) {
 		if (frm.doc.docstatus == 0 && !frm.doc.__islocal) {
 			var label = __("Split Invoice between Warehouses");
 			frm.add_custom_button(label, () => split_invoice_between_warehouse(frm));
+		}
+		if(frm.doc.docstatus == 1){
+		    frm.add_custom_button(__('Send SMS'), () =>{
+				var sms_man = new siqbal.SMSManager(frm.doc);
+			});
 		}
 	},
 	onload: function (frm, cdt, cdn) {
