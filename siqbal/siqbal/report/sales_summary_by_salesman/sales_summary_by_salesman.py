@@ -47,7 +47,7 @@ def get_data(filters):
 		(select '',cust_sales_order_owner,abs(sum(rounded_total)) Old_system_return from `tabPurchase Receipt` tpi where tpi.docstatus=1 and company= %(company)s and tpi.posting_date>=%(fdate)s and tpi.posting_date<=%(tdate)s group by tpi.cust_sales_order_owner) osr on tsm.salesman=osr.cust_sales_order_owner
 		left join
 
-		(select '',cust_sales_order_owner,sum(allocated_amount) as Recovery from `tabPayment Entry Reference` tper inner join `tabPayment Entry` tpe on tper.parent=tpe.name where tpe.posting_date>= %(fdate)s and tpe.posting_date<= %(tdate)s group by tper.cust_sales_order_owner) as per on tsm.salesman=per.cust_sales_order_owner order by tsm.cost_center,tsm.salesman;
+		(select '',cust_sales_order_owner,sum(allocated_amount) as Recovery from `tabPayment Entry Reference` tper inner join `tabPayment Entry` tpe on tper.parent=tpe.name where tpe.docstatus=1 and tpe.posting_date>= %(fdate)s and tpe.posting_date<= %(tdate)s group by tper.cust_sales_order_owner) as per on tsm.salesman=per.cust_sales_order_owner order by tsm.cost_center,tsm.salesman;
 
 	""", filters, as_dict=False)
 
