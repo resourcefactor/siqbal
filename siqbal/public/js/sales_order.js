@@ -1,4 +1,5 @@
 {% include "siqbal/public/js/utils.js" %}
+{% include "siqbal/public/js/sms_manager.js" %}
 {% include 'erpnext/selling/doctype/sales_order/sales_order.js' %}
 frappe.provide('siqbal.selling');
 
@@ -18,6 +19,11 @@ frappe.ui.form.on("Sales Order", {
 					method: "siqbal.hook_events.sales_order.make_so_updation",
 					frm: cur_frm
 				});
+			});
+		}
+		if(frm.doc.docstatus == 1){
+		    frm.add_custom_button(__('Send SMS'), () =>{
+				var sms_man = new siqbal.SMSManager(frm.doc);
 			});
 		}
 	},
