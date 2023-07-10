@@ -132,10 +132,15 @@ doc_events = {
 		"on_cancel": "siqbal.hook_events.sales_invoice.update_reserved_qty"
 	},
 	"Payment Entry": {
-		"validate": "siqbal.hook_events.payment_entry.validate_sales_order",
+		"validate": [
+			"siqbal.hook_events.payment_entry.validate_sales_order",
+			"siqbal.hook_events.payment_entry.validate_salaryslip_amount",
+		],
+		"on_submit": "siqbal.hook_events.payment_entry.update_salaryslip_status",
+		"on_cancel": "siqbal.hook_events.payment_entry.update_salaryslip_status",
 		"on_update_after_submit": [
-            "siqbal.hook_events.payment_entry.validate_sales_order",
-            "siqbal.hook_events.payment_entry.update_sales_order_name"
+			"siqbal.hook_events.payment_entry.validate_sales_order",
+			"siqbal.hook_events.payment_entry.update_sales_order_name"
 		]
 	},
 	"Stock Entry": {
