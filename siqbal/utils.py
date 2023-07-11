@@ -422,7 +422,7 @@ def get_delivered_qty(sales_order, item_code, so_item_row):
 @frappe.whitelist()
 def make_payment(salaryslipname):
 	salaryslip = frappe.get_doc("Salary Slip", salaryslipname)
-	deduction_account = frappe.get_value("Account", {"company": salaryslip.company, "account_number": 22610})
+	deduction_account = frappe.get_value("Account", {"company": salaryslip.company, "account_number": 2120})
 	total_paid_amount = frappe.db.get_value("Payment Entry", {"salary_slip_id": salaryslipname, "docstatus": 1}, "sum(paid_amount)")
 	doc = frappe.new_doc("Payment Entry")
 	doc.update(
@@ -434,7 +434,7 @@ def make_payment(salaryslipname):
 			"party": salaryslip.employee,
 			"paid_to": deduction_account,
 			"paid_amount": salaryslip.rounded_total - (total_paid_amount if total_paid_amount else 0),
-			"deductions": [{"account": deduction_account, "amount": (salaryslip.rounded_total - (total_paid_amount if total_paid_amount else 0))}]
+			"deductions": [{"account": deduction_account, "cost_center": salaryslip.payroll_cost_center, "amount": (salaryslip.rounded_total - (total_paid_amount if total_paid_amount else 0))}]
 		}
 	)
 
