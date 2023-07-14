@@ -55,7 +55,7 @@ def get_columns():
 	"""return columns"""
 
 	columns = [
-		_("Branch")+":Data:150",
+		_("Branch")+":Link/Cost Center:150",
 		_("Salesman")+":Link/User:150",
 		_("Gross Sale")+":Currency:100",
 		_("Canceld Sale")+":Currency:100",
