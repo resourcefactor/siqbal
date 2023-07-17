@@ -39,6 +39,7 @@ doctype_js = {
 	"Item": "public/js/item.js",
 	"Journal Entry": "public/js/journal_entry.js",
 	"Landed Cost Voucher": "public/js/landed_cost_voucher.js",
+	"Loan Disbursement": "public/js/loan_disbursement.js",
 	"Material Request": "public/js/material_request.js",
 	"Opportunity": "public/js/opportunity.js",
 	"Payment Entry": "public/js/payment_entry.js",
