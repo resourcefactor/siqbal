@@ -9,7 +9,28 @@ import frappe
 def execute(filters=None):
 	columns = get_columns()
 	data = get_data(filters)
-	return columns, data
+	datas = []
+	item_details = {}
+	for d in data:
+		key = (d['account_type'])
+		item_details.setdefault(key, {"details": []})
+		fifo_queue = item_details[key]["details"]
+		fifo_queue.append(d)
+
+	g_total_col_3 = 0
+	account_type = ''
+	for k in item_details.keys():
+		total_col_3 = 0
+		for d in item_details[k]['details']:
+			total_col_3 += float(d['balance_amount'])
+			account_type = d['account_type']
+			if account_type != 'Fabric':
+				g_total_col_3 += float(d['balance_amount'])
+			datas.append(d)
+		datas.append({'account': None, 'account_type': '<b> Total </b>', 'balance_amount': total_col_3})
+	datas.append({'account': None, 'account_type': '<b>Grand Total</b>', 'balance_amount': g_total_col_3})
+
+	return columns, datas
 
 
 def get_columns():
