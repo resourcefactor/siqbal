@@ -3,6 +3,24 @@
 
 frappe.ui.form.on("Sales Invoice", {
 	refresh: function (frm, cdt, cdn) {
+		if (frm.doc.docstatus == 0) {
+			var item_childtable = frm.fields_dict["items"].$wrapper;
+			var grid_buttons = $(item_childtable).find(".grid-buttons");
+			if (!$(grid_buttons).find(".custom-update-item-qty").length) {
+				$(grid_buttons).append(`
+								<button type="reset" class="custom-update-item-qty btn btn-xs btn-default"
+										style="margin-left: 4px;">
+									Validate Items
+								</button>
+							`);
+			}
+			$(grid_buttons).find(".custom-update-item-qty").off().click(function () {
+				update_item_qty_based_on_sales_order(frm);
+			});
+		}
+		frappe.after_ajax(function () {
+			setup_warehouse_query('warehouse', frm);
+		});
 		if (frm.doc.docstatus == 0 && !frm.doc.__islocal) {
 			var label = __("Split Invoice between Warehouses");
 			frm.add_custom_button(label, () => split_invoice_between_warehouse(frm));
@@ -44,9 +62,15 @@ frappe.ui.form.on("Sales Invoice", {
 			setup_warehouse_query('warehouse', frm);
 		});
 	},
+	before_save: function (frm) {
+		if (frm.doc.docstatus == 0) {
+			update_item_qty_based_on_sales_order(frm);
+		}
+	},
 	validate: function (frm, cdt, cdn) {
 		if (frm.doc.docstatus == 0) {
 			validateBoxes(frm);
+			update_item_qty_based_on_sales_order(frm);
 			calculate_total_boxes(frm);
 			if (frm.doc.calculate_so_discount_ == true) {
 				frappe.call({
@@ -157,6 +181,42 @@ function get_sales_order_owner(sales_order) {
 		}
 	})
 }
+
+function update_item_qty_based_on_sales_order(frm) {
+	var items = [];
+	$.each(frm.doc.items || [], function (i, d) {
+		items.push({
+			name: d.name,
+			idx: d.idx,
+			item_code: d.item_code,
+			sales_order: d.sales_order,
+			so_detail: d.so_detail,
+			parent: frm.doc.name,
+			qty: d.qty
+		});
+	});
+
+	if (items.length) {
+		frappe.call({
+			method: "siqbal.utils.update_item_qty_based_on_sales_order",
+			args: {
+				"items": items
+			},
+			freeze: true,
+			callback: function (r) {
+				if (!r.exc) {
+					$.each(r.message || {}, function (cdn, row) {
+						$.each(row || {}, function (fieldname, value) {
+							frappe.model.set_value("Sales Invoice Item", cdn, fieldname, value);
+						});
+					});
+					frm.refresh_field("items");
+				}
+			}
+		});
+	}
+}
+
 
 handlePrintButtonClickEvent(cur_frm);
 
