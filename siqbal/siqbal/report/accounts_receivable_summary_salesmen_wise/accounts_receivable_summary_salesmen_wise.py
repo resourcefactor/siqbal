@@ -81,9 +81,9 @@ def get_data(filters):
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as sales_return,
 
-			(select sum(per.total_amount)
+			(select sum(per.allocated_amount)
 			from `tabPayment Entry` as pe
-			inner join `tabPayment Entry Reference` as per on pe.name=per.parent and so.name=per.sales_order
+			inner join `tabPayment Entry Reference` as per on pe.name=per.parent and so.name=per.sales_order and so.name=per.reference_name
 			and pe.docstatus=1) as payment_received
 
 			from `tabSales Order` as so
