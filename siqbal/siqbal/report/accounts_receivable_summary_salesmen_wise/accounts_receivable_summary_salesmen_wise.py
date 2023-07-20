@@ -67,36 +67,36 @@ def get_columns():
 
 
 def get_data(filters):
-	query = """select
-			so.customer_name,
-			sum(so.grand_total) as sales_order_amount,
+	salesman_query = ""
+	if filters.get('salesman'):
+		salesman_query += " and so.owner = '{0}'".format(filters.get('salesman'))
 
-			(select sum(si.grand_total)
+	query = """select foo.customer_name, sum(foo.sales_order_amount) as sales_order_amount,
+		sum(sales_invoice_amount) as sales_invoice_amount, sum(sales_return) as sales_return,
+		sum(payment_received) as payment_received
+		from
+			(select so.customer_name, so.grand_total as sales_order_amount,
+
+			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as sales_invoice_amount,
 
-			(select sum(si.grand_total)
+			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as sales_return,
 
-			(select sum(per.allocated_amount)
-			from `tabPayment Entry` as pe
-			inner join `tabPayment Entry Reference` as per on pe.name=per.parent and so.name=per.sales_order and so.name=per.reference_name
-			and pe.docstatus=1) as payment_received
+			(select ifnull(sum(per.allocated_amount), 0)
+			from `tabPayment Entry Reference` as per
+			inner join `tabPayment Entry` as pe on per.parent=pe.name and so.name=per.reference_name
+			where pe.docstatus=1) as payment_received
 
 			from `tabSales Order` as so
-			where so.docstatus = 1 and so.company = '{0}'
-			and so.transaction_date >= '{1}' and so.transaction_date <= '{2}'
-		""".format(filters.get('company'), filters.get('from_date'), filters.get('to_date'))
+			where so.docstatus = 1 and so.company = '{0}' and so.transaction_date >= '{1}' and so.transaction_date <= '{2}'
+			{3}) as foo
+			group by foo.customer_name""".format(filters.get('company'), filters.get('from_date'), filters.get('to_date'), salesman_query)
 
-	# if filters.get('customer'):
-	# 	query += " and so.customer = '{0}'".format(filters.get('customer'))
-
-	if filters.get('salesman'):
-		query += " and so.owner = '{0}'".format(filters.get('salesman'))
-	query += " group by so.owner, so.customer order by so.customer_name"
 	result = frappe.db.sql(query, as_dict=True)
 
 	data = []
