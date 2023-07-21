@@ -89,7 +89,7 @@ def get_data(filters):
 
 			(select ifnull(sum(per.allocated_amount), 0)
 			from `tabPayment Entry Reference` as per
-			inner join `tabPayment Entry` as pe on per.parent=pe.name and so.name=per.reference_name
+			inner join `tabPayment Entry` as pe on per.parent=pe.name and (so.name=per.sales_order or so.name=per.reference_name)
 			where pe.docstatus=1) as payment_received
 
 			from `tabSales Order` as so
