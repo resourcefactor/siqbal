@@ -77,12 +77,12 @@ def get_data(filters):
 		from
 			(select so.customer_name, so.grand_total as sales_order_amount,
 
-			(select ifnull(sum(sii.amount), 0)
+			(select ifnull(sum(sii.amount), 0) + si.total_taxes_and_charges
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as sales_invoice_amount,
 
-			(select ifnull(sum(sii.amount), 0)
+			(select ifnull(sum(sii.amount), 0) + si.total_taxes_and_charges
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as sales_return,
