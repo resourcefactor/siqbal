@@ -72,20 +72,28 @@ def get_data(filters):
 		salesman_query += " and so.owner = '{0}'".format(filters.get('salesman'))
 
 	query = """select foo.customer_name, sum(foo.sales_order_amount) as sales_order_amount,
-		sum(sales_invoice_amount) as sales_invoice_amount, sum(sales_return) as sales_return,
+		sum(sales_invoice_amount) + invoice_tax_amount as sales_invoice_amount, sum(sales_return) + return_tax_amount as sales_return,
 		sum(payment_received) as payment_received
 		from
 			(select so.customer_name, so.grand_total as sales_order_amount,
 
-			(select ifnull(sum(sii.amount), 0) + si.total_taxes_and_charges
+			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as sales_invoice_amount,
 
-			(select ifnull(sum(sii.amount), 0) + si.total_taxes_and_charges
+			(select ifnull(sum(si.total_taxes_and_charges), 0)
+			from `tabSales Invoice` as si
+			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as invoice_tax_amount,
+
+			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as sales_return,
+
+			(select ifnull(sum(si.total_taxes_and_charges), 0)
+			from `tabSales Invoice` as si
+			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as return_tax_amount,
 
 			(select ifnull(sum(per.allocated_amount), 0)
 			from `tabPayment Entry Reference` as per
