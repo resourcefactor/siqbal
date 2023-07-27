@@ -32,7 +32,7 @@ def update_salaryslip_status(pe, method):
 		if method == "on_submit":
 			total_salary = frappe.db.get_value("Salary Slip", pe.salary_slip_id, "rounded_total")
 			if (total_salary if total_salary else 0) == (total_paid_amount if total_paid_amount else 0):
-				slipsatus = "Salary Paid"
+				slipsatus = "Paid"
 			else:
 				slipsatus = "Partial Paid"
 		elif method == "on_cancel":
