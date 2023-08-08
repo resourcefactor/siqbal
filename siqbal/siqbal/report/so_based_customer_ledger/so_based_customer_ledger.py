@@ -167,7 +167,7 @@ class UnbilledCustomerOrdersReport(object):
 			if res.get('credit'):
 				total_credit += res.get('credit')
 
-		r_sales_inv_gl1 = frappe.db.sql("""select so.transaction_date as posting_date,
+		r_sales_inv_gl1 = frappe.db.sql("""select si.posting_date as posting_date,
 				so.name as voucher_no,
 				so.owner,
 				'Return' as voucher_type,
@@ -249,7 +249,6 @@ class UnbilledCustomerOrdersReport(object):
 
 		data.append(opening_balance)
 
-
 		if sales_inv_gl:
 			data.extend(sales_inv_gl)
 		if r_sales_inv_gl1:
@@ -270,12 +269,12 @@ class UnbilledCustomerOrdersReport(object):
 				debit DOUBLE,
 				credit DOUBLE,
 				balance DOUBLE)""")
-		for res in data:
-			frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""",res)
-		dd = frappe.db.sql("""select * from `so report` order by posting_date""", as_dict=True)
-		self.calculate_running_total(dd)
-		return dd
-		# return data
+		# for res in data:
+		# 	frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""",res)
+		# dd = frappe.db.sql("""select * from `so report` order by posting_date""", as_dict=True)
+		self.calculate_running_total(data)
+		# return dd
+		return data
 
 	def calculate_running_total(self, data):
 		for i, d in enumerate(data):
