@@ -80,13 +80,13 @@ def get_data(filters):
 			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
-			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as sales_invoice_amount,
+			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=0) as sales_invoice_amount,
 
 			(select ifnull(sum(si.total_taxes_and_charges), 0)
 			from `tabSales Invoice` as si
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as invoice_tax_amount,
 
-			(select ifnull(sum(sii.amount), 0)
+			(select ifnull(abs(sum(sii.amount)), 0)
 			from `tabSales Invoice` as si
 			inner join `tabSales Invoice Item` as sii on sii.parent=si.name and sii.sales_order=so.name
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1 and si.is_return=1) as sales_return,
