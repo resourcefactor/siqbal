@@ -72,7 +72,7 @@ def get_data(filters):
 		salesman_query += " and so.owner = '{0}'".format(filters.get('salesman'))
 
 	query = """select foo.customer_name, sum(foo.sales_order_amount) as sales_order_amount,
-		sum(sales_invoice_amount) + invoice_tax_amount as sales_invoice_amount, sum(sales_return) + return_tax_amount as sales_return,
+		sum(sales_invoice_amount) + invoice_tax_amount - additional_discount_amount as sales_invoice_amount, sum(sales_return) + return_tax_amount as sales_return,
 		sum(payment_received) as payment_received
 		from
 			(select so.customer_name, so.grand_total as sales_order_amount,
@@ -85,6 +85,10 @@ def get_data(filters):
 			(select ifnull(sum(si.total_taxes_and_charges), 0)
 			from `tabSales Invoice` as si
 			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as invoice_tax_amount,
+
+			(select ifnull(sum(si.discount_amount), 0)
+			from `tabSales Invoice` as si
+			where si.sales_order_owner=so.owner and si.customer=so.customer and si.docstatus=1) as additional_discount_amount,
 
 			(select ifnull(abs(sum(sii.amount)), 0)
 			from `tabSales Invoice` as si
