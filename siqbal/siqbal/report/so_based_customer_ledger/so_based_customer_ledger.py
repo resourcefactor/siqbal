@@ -258,7 +258,7 @@ class UnbilledCustomerOrdersReport(object):
 		if other_entry:
 			data.extend(other_entry)
 
-		data.append(closing_balance)
+		# data.append(closing_balance)
 		frappe.db.commit()
 		frappe.db.sql("DROP TABLE IF EXISTS `so report`")
 		frappe.db.sql("""CREATE TABLE `so report`(
@@ -269,12 +269,13 @@ class UnbilledCustomerOrdersReport(object):
 				debit DOUBLE,
 				credit DOUBLE,
 				balance DOUBLE)""")
-		# for res in data:
-		# 	frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""",res)
-		# dd = frappe.db.sql("""select * from `so report` order by posting_date""", as_dict=True)
-		self.calculate_running_total(data)
-		# return dd
-		return data
+		for res in data:
+			frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""",res)
+		dd = frappe.db.sql("""select * from `so report` order by posting_date""", as_dict=True)
+		dd.append(closing_balance)
+		self.calculate_running_total(dd)
+		return dd
+		# return data
 
 	def calculate_running_total(self, data):
 		for i, d in enumerate(data):
