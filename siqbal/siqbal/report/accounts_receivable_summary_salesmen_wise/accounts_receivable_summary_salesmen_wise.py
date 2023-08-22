@@ -15,6 +15,13 @@ def execute(filters=None):
 def get_columns():
 	columns = [
 		{
+			"label": "Customer",
+			"fieldtype": "Link",
+			"fieldname": "customer",
+			"options": "Customer",
+			"width": 100
+		},
+		{
 			"label": "Customer Name",
 			"fieldtype": "Data",
 			"fieldname": "customer_name",
@@ -71,11 +78,11 @@ def get_data(filters):
 	if filters.get('salesman'):
 		salesman_query += " and so.owner = '{0}'".format(filters.get('salesman'))
 
-	query = """select foo.customer_name, sum(foo.sales_order_amount) as sales_order_amount,
+	query = """select foo.customer, foo.customer_name, sum(foo.sales_order_amount) as sales_order_amount,
 		sum(sales_invoice_amount) + invoice_tax_amount - additional_discount_amount as sales_invoice_amount, sum(sales_return) - return_tax_amount - return_additional_discount_amount as sales_return,
 		sum(payment_received) as payment_received
 		from
-			(select so.customer_name, so.grand_total as sales_order_amount,
+			(select so.customer, so.customer_name, so.grand_total as sales_order_amount,
 
 			(select ifnull(sum(sii.amount), 0)
 			from `tabSales Invoice` as si
@@ -111,7 +118,7 @@ def get_data(filters):
 			from `tabSales Order` as so
 			where so.docstatus = 1 and so.company = '{0}' and so.transaction_date >= '{1}' and so.transaction_date <= '{2}'
 			{3}) as foo
-			group by foo.customer_name""".format(filters.get('company'), filters.get('from_date'), filters.get('to_date'), salesman_query)
+			group by foo.customer""".format(filters.get('company'), filters.get('from_date'), filters.get('to_date'), salesman_query)
 
 	result = frappe.db.sql(query, as_dict=True)
 
@@ -119,6 +126,7 @@ def get_data(filters):
 	for row in result:
 		pending_sales_order_amount = (row.sales_order_amount if row.sales_order_amount else 0) - (row.sales_invoice_amount if row.sales_invoice_amount else 0)
 		row = {
+			"customer": row.customer,
 			"customer_name": row.customer_name,
 			"sales_order_amount": row.sales_order_amount,
 			"sales_invoice_amount": row.sales_invoice_amount,
