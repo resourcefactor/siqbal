@@ -68,6 +68,12 @@ def get_columns():
 			"fieldtype": "Currency",
 			"fieldname": "balance_per_si",
 			"width": 150
+		},
+		{
+			"label": "J.V",
+			"fieldtype": "Currency",
+			"fieldname": "jv",
+			"width": 150
 		}
 	]
 	return columns
@@ -124,6 +130,12 @@ def get_data(filters):
 
 	data = []
 	for row in result:
+		jv_result = frappe.db.sql("""select sum(debit-credit) as jv_value
+			from `tabGL Entry`
+			where voucher_type='Journal Entry' and is_cancelled=0 and against='{0}'
+			and posting_date >= '{1}' and posting_date <= '{2}'
+		""".format(row.customer, filters.get('from_date'), filters.get('to_date')), as_dict=True)[0]
+
 		pending_sales_order_amount = (row.sales_order_amount if row.sales_order_amount else 0) - (row.sales_invoice_amount if row.sales_invoice_amount else 0)
 		row = {
 			"customer": row.customer,
@@ -134,7 +146,8 @@ def get_data(filters):
 			"sales_return": row.sales_return,
 			"payment_received": row.payment_received,
 			"balance_per_so": (row.sales_order_amount if row.sales_order_amount else 0) - (row.sales_return if row.sales_return else 0) - (row.payment_received if row.payment_received else 0),
-			"balance_per_si": (row.sales_invoice_amount if row.sales_invoice_amount else 0) - (row.sales_return if row.sales_return else 0) - (row.payment_received if row.payment_received else 0)
+			"balance_per_si": (row.sales_invoice_amount if row.sales_invoice_amount else 0) - (row.sales_return if row.sales_return else 0) - (row.payment_received if row.payment_received else 0),
+			"jv": jv_result.jv_value
 		}
 		data.append(row)
 
