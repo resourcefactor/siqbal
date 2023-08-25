@@ -130,9 +130,9 @@ def get_data(filters):
 
 	data = []
 	for row in result:
-		jv_result = frappe.db.sql("""select sum(debit-credit) as jv_value
+		jv_result = frappe.db.sql("""select sum(debit), sum(credit), sum(debit-credit) as jv_value
 			from `tabGL Entry`
-			where voucher_type='Journal Entry' and is_cancelled=0 and against='{0}'
+			where voucher_type='Journal Entry' and is_cancelled=0 and party='{0}'
 			and posting_date >= '{1}' and posting_date <= '{2}'
 		""".format(row.customer, filters.get('from_date'), filters.get('to_date')), as_dict=True)[0]
 
