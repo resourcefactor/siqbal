@@ -8,12 +8,12 @@ frappe.ui.form.on("Customer", "onload", function (frm, cdt, cdn) {
 });
 
 frappe.ui.form.on("Customer", "validate", function (frm, cdt, cdn) {
-	frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());
 	validate_number(frm);
+	frm.set_value("customer_name", frm.doc.customer_name.toUpperCase());	
 });
 
 frappe.ui.form.on("Customer", {
-	cust_phone_number: function (frm) { validate_number(frm); },
+	// cust_phone_number: function (frm) { validate_number(frm); },
 	cnic: function (frm) { validate_cnic(frm); }
 });
 
