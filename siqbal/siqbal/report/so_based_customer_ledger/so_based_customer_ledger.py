@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import getdate, nowdate
 
+
 class UnbilledCustomerOrdersReport(object):
 	def __init__(self, filters=None):
 		self.filters = frappe._dict(filters or {})
@@ -37,7 +38,8 @@ class UnbilledCustomerOrdersReport(object):
 			},
 			{
 				"label": _("Voucher"),
-				"fieldtype": "Data",
+				"fieldtype": "Dynamic Link",
+				"options": "voucher_type",
 				"fieldname": "voucher_no",
 				"width": 220
 			},
@@ -86,7 +88,7 @@ class UnbilledCustomerOrdersReport(object):
 			"credit": 0.0,
 			"balance": 0.0
 		})
-		ledger_rows = []
+
 		closing_balance = frappe._dict({
 			"posting_date": self.filters.to_date,
 			"voucher_type": "Closing Balance",
@@ -270,7 +272,7 @@ class UnbilledCustomerOrdersReport(object):
 				credit DOUBLE,
 				balance DOUBLE)""")
 		for res in data:
-			frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""",res)
+			frappe.db.sql("""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s)""", res)
 		dd = frappe.db.sql("""select * from `so report` order by posting_date""", as_dict=True)
 		dd.append(closing_balance)
 		self.calculate_running_total(dd)
