@@ -124,7 +124,21 @@ siqbal.buying.PurchaseOrderController = erpnext.buying.PurchaseOrderController.e
 		}
 
 		if (cint(doc.docstatus==0) && cur_frm.page.current_view_name!=="pos" && !doc.is_return) {
-			this.frm.cscript.sales_order_btn();
+			this.frm.add_custom_button(__('Sales Order'),
+			function() {
+				erpnext.utils.map_current_doc({
+					method: "siqbal.utils.ts_make_purchase_order",
+					source_doctype: "Sales Order",
+					target: me.frm,
+					setters: {},
+					get_query_filters: {
+						docstatus: 1,
+						status: ["not in", ["Closed", "On Hold"]],
+						per_billed: ["<", 99.99],
+						company: me.frm.doc.company
+					}
+				})
+			}, __("Get Items From"));
 		}
 	},
 	ts_make_purchase_receipt: function () {
@@ -133,47 +147,5 @@ siqbal.buying.PurchaseOrderController = erpnext.buying.PurchaseOrderController.e
 			frm: cur_frm
 		})
 	},
-	sales_order_btn: function() {
-		var me = this;
-		this.$sales_order_btn = this.frm.add_custom_button(__('Sales Order'),
-			function() {
-				erpnext.utils.map_current_doc({
-					method: "siqbal.utils.ts_make_purchase_order",
-					source_doctype: "Sales Order",
-					target: me.frm,
-					setters: {
-						customer: me.frm.doc.customer || undefined,
-						po_number: me.frm.doc.po_number
-					},
-					get_query_filters: {
-						docstatus: 1,
-						status: ["not in", ["Closed", "On Hold"]],
-						per_billed: ["<", 99.99],
-						company: me.frm.doc.company
-					}
-				})
-			}, __("Get items from"));
-		}
-	// add_from_mappers: function() {
-	// 	var me = this;
-	// 	this.frm.add_custom_button(__('Sales Order'),
-	// 		function() {
-	// 			erpnext.utils.map_current_doc({
-	// 				method: "erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
-	// 				source_doctype: "Sales Order",
-	// 				target: me.frm,
-	// 				setters: {
-	// 					customer: me.frm.doc.customer || undefined,
-	// 				},
-	// 				get_query_filters: {
-	// 					docstatus: 1,
-	// 					status: ["not in", ["Closed", "On Hold"]],
-	// 					per_billed: ["<", 99.99],
-	// 					company: me.frm.doc.company
-	// 				}
-	// 			})
-	// 		}, __("Get items from"));
-	// 	}
-	});
 
 $.extend(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
