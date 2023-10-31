@@ -147,5 +147,6 @@ siqbal.buying.PurchaseOrderController = erpnext.buying.PurchaseOrderController.e
 			frm: cur_frm
 		})
 	},
+});
 
 $.extend(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
