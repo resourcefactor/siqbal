@@ -152,13 +152,12 @@ doc_events = {
 	}
 }
 
-
 jenv = {
 	"methods": [
-		"get_qrcode_image:siqbal.utils.get_qrcode_image"
+		"get_qrcode_image:siqbal.utils.get_qrcode_image",
+		"update_print_no:siqbal.hook_events.print_counter.update_print_no",
 	]
 }
-
 
 # Scheduled Tasks
 # ---------------
