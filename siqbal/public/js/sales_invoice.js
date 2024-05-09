@@ -92,13 +92,15 @@ frappe.ui.form.on("Sales Invoice", {
 			$.each(frm.doc.items || [], function (i, d) {
 				if (d.item_group != 'Fixed Assets' && d.item_group != 'SERVICE') {
 					if (d.qty == 0 || d.rate == 0) {
-						frappe.throw("0 Qty or Rate is not allowed. Please check item " + d.item_code);
-						frappe.validated = false; return;
+						frappe.msgprint(__("0 Qty or Rate is not allowed. Please check item {0}", [d.item_code]));
+						frappe.validated = false;
 					}
 					if (frm.doc.update_stock) {
 						if (d.qty > d.actual_qty) {
-							frappe.throw("Stock Is not availabe in selected warehouse for item code " + d.item_code);
-							frappe.validated = false; return;
+							frappe.msgprint(__("Stock Is not availabe in selected warehouse for item code {0}", [d.item_code]));
+							frappe.validated = false;
+							// frappe.throw("Stock Is not availabe in selected warehouse for item code " + d.item_code);
+							// frappe.validated = false; return;
 						}
 					}
 				}
