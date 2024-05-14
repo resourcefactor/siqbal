@@ -46,7 +46,7 @@ class UnbilledCustomerOrdersReport(object):
 				"label": _("Sales Order"),
 				"fieldtype": "Link",
 				"options": "Sales Order",
-				"fieldname": "so",
+				"fieldname": "sales_order",
 				"width": 120
 			},
 			{
@@ -125,10 +125,12 @@ class UnbilledCustomerOrdersReport(object):
 		invoice_order_nos = self.get_invoice_order_nos(invoices)
 		for d in ledger_rows:
 			if d.voucher_type == "Sales Invoice":
-				d.so = invoice_order_nos.get(d.voucher_no)
-
+				d.sales_order = invoice_order_nos.get(d.voucher_no)
 		data = [opening_balance] + ledger_rows + [closing_balance] + unbilled_rows
 		self.calculate_running_total(data)
+		for d in data:
+			if not d.get("sales_order"):
+				d["sales_order"] = ""
 		return data
 
 	def get_gl_entries(self):
@@ -150,7 +152,7 @@ class UnbilledCustomerOrdersReport(object):
 	def get_unbilled_orders(self):
 		self.unbilled_orders = frappe.db.sql("""
 			select
-				so.transaction_date as posting_date, so.name as so,
+				so.transaction_date as posting_date, so.name as sales_order,
 				so.rounded_total as debit,
 				sum(ifnull(si.rounded_total, 0)) as credit
 			from `tabSales Order` so
