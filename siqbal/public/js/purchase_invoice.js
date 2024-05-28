@@ -38,6 +38,7 @@ frappe.ui.form.on('Purchase Invoice Item',
 	})
 
 function CalculateSQM(crow, field, cdt, cdn) {
+	var d = locals[cdt][cdn];
 	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
 		var total_piece = 0.0;
 		switch (field) {
@@ -51,7 +52,8 @@ function CalculateSQM(crow, field, cdt, cdn) {
 			crow.boxes = Math.floor((new_sqm / crow.def_boxes).toFixed(4));
 		} else { crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4)); }
 		crow.pieces = (total_piece % crow.def_pieces);
-		frappe.model.set_value(cdt, cdn, 'qty', new_sqm);
+		d.qty =  new_sqm;
+		// frappe.model.set_value(cdt, cdn, 'qty', new_sqm);
 		crow.sqm = new_sqm;
 		cur_frm.refresh_field("items");
 	}
