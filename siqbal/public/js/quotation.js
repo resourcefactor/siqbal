@@ -1,36 +1,37 @@
 {% include "siqbal/public/js/utils.js" %}
 
-frappe.ui.form.on("Quotation", "onload", function (frm, cdt, cdn) {
-	// var ret_obj = setseries(frm.doc.company);
-	// frm.set_value("naming_series", ret_obj.series);
-	$.each(frm.doc.items || [], function (i, d) {
-		if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
-	})
-	if (frm.doc.quotation_to == "Customer") {
-		set_address_query(frm, frm.doc.party_name);
-	}
-});
-
-frappe.ui.form.on("Quotation", "validate", function (frm, cdt, cdn) {
-	validateBoxes(frm);
-	// var ret_obj = setseries(frm.doc.company);
-	// frm.set_value("naming_series", ret_obj.series);
-	// $.each(frm.doc.items || [], function (i, d) {
-	// 	d.warehouse = ret_obj.twarehouse
-	// })
-});
-
-frappe.ui.form.on("Quotation", "refresh", function (frm, cdt, cdn) {
-	if (frm.doc.quotation_to == "Customer") {
-		frm.fields_dict.party_name.get_query = function (doc, cdt, cdn) {
-			return { query: "erpnext.controllers.queries.customer_query" }
+frappe.ui.form.on("Quotation", {
+	quotation_to: function (frm) {
+		if (frm.doc.quotation_to == "Customer") {
+			frm.fields_dict.party_name.get_query = function () {
+				return { query: "erpnext.controllers.queries.customer_query" }
+			}
 		}
-		set_address_query(frm, frm.doc.party_name);
-	}
-	if (frm.doc.docstatus == 0 && frm.doc.company) {
+	},
+	party_name: function (frm) {
+		if (frm.doc.quotation_to == "Customer") {
+			frm.fields_dict.party_name.get_query = function () {
+				return { query: "erpnext.controllers.queries.customer_query" }
+			}
+		}
+	},
+	refresh: function (frm) {
+		if (frm.doc.docstatus == 0 && frm.doc.company) {
+			$.each(frm.doc.items || [], function (i, d) {
+				set_total_qty(frm, d.doctype, d.name, d.item_code);
+			})
+		}
+	},
+	onload: function(frm, cdt, cdn) {
 		$.each(frm.doc.items || [], function (i, d) {
-			set_total_qty(frm, d.doctype, d.name, d.item_code);
+			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 		})
+		if (frm.doc.quotation_to == "Customer") {
+			set_address_query(frm, frm.doc.party_name);
+		}
+	},
+	validate: function(frm, cdt, cdn) {
+		validateBoxes(frm);
 	}
 });
 
@@ -41,7 +42,6 @@ frappe.ui.form.on('Quotation Item',
 		boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); },
 		qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
 		item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
-		// company: cur_frm.cscript.company = function (doc, cdt, cdn) { var ret_obj = setseries(doc.company); cur_frm.set_value("naming_series", ret_obj.series); },
 		item_code: function (frm, cdt, cdn) {
 			frappe.model.set_value(cdt, cdn, "qty", 1);
 			frappe.model.set_value(cdt, cdn, "discount_percentage", 0);
@@ -79,10 +79,3 @@ function CalculateSQM(crow, field, cdt, cdn) {
 		cur_frm.refresh_field("items");
 	}
 }
-// function setseries(company) {
-// 	var ret_obj = { twarehouse: "", series: "" };
-// 	switch (company) {
-// 		case "SIqbal": ret_obj.series = "TT-QTN-"; break;
-// 	}
-// 	return ret_obj;
-// }
