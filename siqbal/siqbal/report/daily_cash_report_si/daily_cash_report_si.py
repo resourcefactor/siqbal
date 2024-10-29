@@ -190,22 +190,41 @@ def get_result(filters, account_details):
 
     for d in result:
         # Add the original entry to the final result
+        party = ""
+        party_name = ""
+
         final_result.append(d)
+        if d.get("voucher_type"):
+            doc = frappe.get_doc(d.get("voucher_type"), d["voucher_no"])
+            if d.get("voucher_type") == "Sales Invoice":
+                party = doc.customer
+                party_name = doc.customer_name
+            elif d.get("voucher_type") == "Purchase Invoice":
+                party = doc.supplier
+                party_name = doc.supplier_name
+            elif d.get("voucher_type") == "Payment Entry":
+                party = doc.party
+                party_name = doc.party_name
 
-        if d.get("voucher_type") == "Purchase Invoice":
-            pi = frappe.get_doc("Purchase Invoice", d["voucher_no"])
+                d["party"] = party
+                d["party_name"] = party_name
 
+        if d.get("voucher_type") and d.get("voucher_type") == "Purchase Invoice":
             # Modify the main row to include the first item details
-            if pi.items:
-                d["description_pi"] = pi.items[0].get("item_name")
-                d["account_head_pi"] = pi.items[0].get("expense_account")
-                d["item_amount_pi"] = pi.items[0].get("amount")
+            if doc.items:
+                d["party"] = party
+                d["party_name"] = party_name
+                d["description_pi"] = doc.items[0].get("item_name")
+                d["account_head_pi"] = doc.items[0].get("expense_account")
+                d["item_amount_pi"] = doc.items[0].get("amount")
 
             # Prepare new rows for each additional item in the purchase invoice
-            for item in pi.items[1:]:  # Skip the first item
+            for item in doc.items[1:]:  # Skip the first item
                 new_entry = d.copy()  # Copy existing data
                 new_entry.update(
                     {
+                        "party": party,
+                        "party_name": party_name,
                         "description_pi": item.get("item_name"),
                         "item_amount_pi": item.get("amount"),
                         "account_head_pi": item.get("expense_account"),
@@ -217,13 +236,13 @@ def get_result(filters, account_details):
                 )
                 final_result.append(new_entry)  # Append each new row after the main row
 
-        # Set party_name if party_type and party exist
-        if d.get("party_type") and d.get("party"):
-            d["party_name"] = frappe.db.get_value(
-                d.get("party_type"),
-                d.get("party"),
-                d.get("party_type").lower() + " name",
-            )
+        # # Set party_name if party_type and party exist
+        # if d.get("party_type") and d.get("party"):
+        #     d["party_name"] = frappe.db.get_value(
+        #         d.get("party_type"),
+        #         d.get("party"),
+        #         d.get("party_type").lower() + " name",
+        #     )
 
     # Return the modified final result list
     return final_result
