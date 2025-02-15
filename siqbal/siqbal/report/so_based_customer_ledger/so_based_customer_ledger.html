@@ -1,0 +1,40 @@
+<h2 class="text-center">{%= __("SO Based Customer Ledger") %}</h2>
+<h4 class="text-center">
+	{% if (filters.customer_name) { %}
+	{%= filters.customer_name %}
+	{% } %}
+</h4>
+<h5 class="text-left">
+	{%= __("Date From") %}: {%= frappe.datetime.str_to_user(filters.from_date) %}<br />
+	{%= __("Date To") %}: {%= frappe.datetime.str_to_user(filters.to_date) %}
+</h5>
+<hr>
+<table class="table table-bordered" style="font-size: 8px;">
+	<thead>
+		<tr>
+			<th>{%= __("Date") %}</th>
+			<th>{%= __("Voucher Type") %}</th>
+			<th>{%= __("Voucher") %}</th>
+			<th>{%= __("Return Voucher No") %}</th>
+			<th>{%= __("Description") %}</th>
+			<th>{%= __("Debit") %}</th>
+			<th>{%= __("Credit") %}</th>
+			<th>{%= __("Balance") %}</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for(var i=0, l=data.length; i<l; i++) { %} <tr>
+			<td style="width: 12%;">{%= data[i].posting_date %}</td>
+			<td>{%= data[i].voucher_type %}</td>
+			<td>{%= data[i].voucher_no %}</td>
+			<td>{%= data[i].return_voucher_no %}</td>
+			<td>{%= data[i].description %}</td>
+			<td>{%= format_currency(data[i].debit) %}</td>
+			<td>{%= format_currency(data[i].credit) %}</td>
+			<td>{%= format_currency(data[i].balance) %}</td>
+			</tr>
+			{% } %}
+	</tbody>
+</table>
+<p class="text-right text-muted">Printed On {%= frappe.datetime.str_to_user(frappe.datetime.get_datetime_as_string()) %}
+</p>
