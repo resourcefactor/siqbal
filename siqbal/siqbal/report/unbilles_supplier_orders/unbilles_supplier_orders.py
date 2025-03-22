@@ -138,19 +138,19 @@ class UnbilledSupplierOrdersReport(object):
     def get_gl_entries(self):
         self.gl_entries = frappe.db.sql(
             """
-			select
-				posting_date, voucher_type, voucher_no,
-				if(sum(debit-credit) > 0, sum(debit-credit), 0) as debit,
-				if(sum(debit-credit) < 0, -sum(debit-credit), 0) as credit,
-				GROUP_CONCAT(DISTINCT against_voucher_type SEPARATOR ', ') as against_voucher_type,
-				GROUP_CONCAT(DISTINCT against_voucher SEPARATOR ', ') as against_voucher
-			from
-				`tabGL Entry`
-			where
-				is_cancelled=0 and docstatus < 2 and party_type='Supplier' and party = %(supplier)s and posting_date <= %(to_date)s
-				and company = %(company)s
-			group by voucher_type, voucher_no
-			order by posting_date""",
+            select
+                posting_date, voucher_type, voucher_no,
+                if(sum(debit-credit) > 0, sum(debit-credit), 0) as debit,
+                if(sum(debit-credit) < 0, -sum(debit-credit), 0) as credit,
+                GROUP_CONCAT(DISTINCT against_voucher_type SEPARATOR ', ') as against_voucher_type,
+                GROUP_CONCAT(DISTINCT against_voucher SEPARATOR ', ') as against_voucher
+            from
+                `tabGL Entry`
+            where
+                is_cancelled=0 and party_type='Supplier' and party = %(supplier)s and posting_date <= %(to_date)s
+                and company = %(company)s
+            group by voucher_type, voucher_no
+            order by posting_date""",
             self.filters,
             as_dict=True,
         )
@@ -158,23 +158,23 @@ class UnbilledSupplierOrdersReport(object):
     def get_unbilled_orders(self):
         self.unbilled_orders = frappe.db.sql(
             """
-			select
-				po.transaction_date as posting_date, po.name as po,
-				0 as debit,
-				(po.rounded_total-sum(ifnull(pi.rounded_total, 0))) as credit
-			from `tabPurchase Order` po
-			left join `tabPurchase Invoice` pi on pi.docstatus=1 and pi.is_return!=1 and exists(
-				select item.name
-				from `tabPurchase Invoice Item` item
-				where item.parent = pi.name and item.purchase_order = po.name
-			)
-			where
-				po.docstatus = 1 and po.status != 'Closed' and per_billed<98.98
-				and po.supplier=%(supplier)s and po.company=%(company)s
-			group by po.name
-			having debit-credit > 0
-			order by transaction_date
-		""",
+            select
+                po.transaction_date as posting_date, po.name as po,
+                0 as debit,
+                (po.rounded_total-sum(ifnull(pi.rounded_total, 0))) as credit
+            from `tabPurchase Order` po
+            left join `tabPurchase Invoice` pi on pi.docstatus=1 and pi.is_return!=1 and exists(
+                select item.name
+                from `tabPurchase Invoice Item` item
+                where item.parent = pi.name and item.purchase_order = po.name
+            )
+            where
+                po.docstatus = 1 and po.status != 'Closed' and per_billed<98.98
+                and po.supplier=%(supplier)s and po.company=%(company)s
+            group by po.name
+            
+            order by transaction_date
+        """,
             self.filters,
             as_dict=1,
         )
@@ -185,11 +185,11 @@ class UnbilledSupplierOrdersReport(object):
 
         res = frappe.db.sql(
             """
-			select parent, GROUP_CONCAT(DISTINCT purchase_order SEPARATOR ', ')
-			from `tabPurchase Invoice Item`
-			where docstatus=1 and parent in ({invoices})
-			group by parent
-		""".format(invoices=", ".join(["%s"] * len(invoices))),
+            select parent, GROUP_CONCAT(DISTINCT purchase_order SEPARATOR ', ')
+            from `tabPurchase Invoice Item`
+            where parent in ({invoices})
+            group by parent
+        """.format(invoices=", ".join(["%s"] * len(invoices))),
             invoices,
         )
         return dict(res)
@@ -203,7 +203,7 @@ class UnbilledSupplierOrdersReport(object):
 
 
 def execute(filters=None):
-	return UnbilledSupplierOrdersReport(filters).run()
+    return UnbilledSupplierOrdersReport(filters).run()
 
-	# columns, data = [], []
-	# return columns, data
+    # columns, data = [], []
+    # return columns, data
