@@ -9,34 +9,16 @@ frappe.ui.form.on("Purchase Order", {
 				d.schedule_date = frm.doc.schedule_date;
 			})
 		}
-	}//,
-	// company: function (frm) {
-	// 	if(cur_frm.doc.__islocal!=undefined){
-	// 		var ret_obj = setseries(frm.doc.company);
-	// 		frm.set_value("naming_series", ret_obj.series);
-	// 	}
-	// }
+	}
 });
 frappe.ui.form.on("Purchase Order", "onload", function (frm, cdt, cdn) {
-	// if(cur_frm.doc.__islocal!=undefined){
-	// var ret_obj = setseries(frm.doc.company);	
-	// frm.set_value("naming_series", ret_obj.series);
-	// }
 	$.each(frm.doc.items || [], function (i, d) {
 		if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 	})
-	
 });
 
 frappe.ui.form.on("Purchase Order", "validate", function (frm, cdt, cdn) {
-	// if(cur_frm.doc.__islocal!=undefined){
-	// var ret_obj = setseries(frm.doc.company);
-	// frm.set_value("naming_series", ret_obj.series);
-	// }
-	validateBoxes(frm);	
-	$.each(frm.doc.items || [], function (i, d) {
-	//	d.warehouse = ret_obj.twarehouse;
-	})
+	validateBoxes(frm);
 	calculate_total_boxes(frm);
 });
 
@@ -85,17 +67,10 @@ function CalculateSQM(crow, field, cdt, cdn) {
 	}
 }
 
-// function setseries(company) {
-// 	var ret_obj = {  series: "" };	
-// 	switch (company) {
-// 		case "Turk Tiles":  ret_obj.series = "TT-PO-"; break;
-// 	}
-// 	return ret_obj;
-// }
-
-siqbal.buying.PurchaseOrderController = erpnext.buying.PurchaseOrderController.extend({
-	refresh: function (doc, cdt, cdn) {
-		this._super(doc);
+siqbal.buying.PurchaseOrderController = class PurchaseOrderController extends erpnext.buying.BuyingController {
+	refresh(frm, cdt, cdn) {
+		var me = this;
+		super.refresh();
 		var allow_receipt = false;
 		var is_drop_ship = false;
 
@@ -140,13 +115,14 @@ siqbal.buying.PurchaseOrderController = erpnext.buying.PurchaseOrderController.e
 				})
 			}, __("Get Items From"));
 		}
-	},
-	ts_make_purchase_receipt: function () {
+	}
+
+	ts_make_purchase_receipt() {
 		frappe.model.open_mapped_doc({
 			method: "siqbal.utils.ts_make_purchase_receipt",
 			frm: cur_frm
 		})
-	},
-});
+	}
+};
 
-$.extend(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
+extend_cscript(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
