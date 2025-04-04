@@ -1,123 +1,123 @@
 {% include "siqbal/public/js/utils.js" %}
 frappe.provide('siqbal.stock');
 
-
-// frappe.ui.form.on('Purchase Receipt', {
-// 	// company: function (frm) { if (frm.doc.docstatus == 0) { var ret_obj = setseries(frm.doc.company); frm.set_value("naming_series", ret_obj.series); } },
-
-// 	charge_to_supplier: function (frm) {
-// 		if (frm.doc.docstatus == 0) {
-// 		//	frm.set_value("charge_to_company", (parseFloat(frm.doc.breakage_total_amount) - parseFloat(frm.doc.charge_to_supplier)));
-// 		}
-// 	}
-// });
-
-frappe.ui.form.on("Purchase Receipt", "validate", function (frm, cdt, cdn) {
-	if (frm.doc.docstatus == 0) {
-		validateBoxes(frm);
-		// var ret_obj = setseries(frm.doc.company);
-		// frm.set_value("naming_series", ret_obj.series);
-		CalculateBreakage(frm);
-		$.each(frm.doc.items || [], function (i, d) {
-			frappe.call({
-				method: "frappe.client.get",
-				args: {
-					doctype: "User",
-					filters: { "name": frappe.session.user },
-					fieldname: "user_warehouse"
-				},
-				callback: function (r) {
+frappe.ui.form.on('Purchase Receipt', {
+	validate: function (frm, cdt, cdn) {
+		if (frm.doc.docstatus === 0) {
+			validateBoxes(frm);
+			CalculateBreakage(frm);
+			frm.doc.items.forEach((d) => {
+				frappe.db.get_value("User", frappe.session.user, "user_warehouse").then((r) => {
 					if (r.message.user_warehouse) {
 						d.warehouse = r.message.user_warehouse;
+						frm.doc.set_warehouse = r.message.user_warehouse;
 					}
 					if (d.rejected_qty > 0) {
-						d.rejected_warehouse = r.message.user_warehouse.replace("Normal", "Breakage");
+						frappe.db.get_value("Warehouse", frm.doc.set_warehouse, "rejected_warehouse").then((res) => {
+							frm.doc.rejected_warehouse = res.message.rejected_warehouse;
+						});
+						frappe.db.get_value("Warehouse", d.warehouse, "rejected_warehouse").then((res) => {
+							d.rejected_warehouse = res.message.rejected_warehouse;
+						});
 					}
+				});
+
+				if(!frm.doc.is_return && d.rejected_boxes < 0) {
+					frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
+				} else if(!frm.doc.is_return && d.rejected_pieces < 0) {
+					frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
 				}
-			})
-		});
-		//calculate_total_boxes(frm);
+			});
+			calculate_total_boxes(frm);
+		}
+	},
+	onload: function (frm, cdt, cdn) {
+		if (frm.doc.docstatus === 0) {
+			frm.doc.items.forEach((d) => {
+				if (d.qty !== d.sqm && d.item_code) {
+					CalculateSQM(d, "received_qty", cdt, cdn);
+				}
+				if(!d.warehouse || !frm.doc.set_warehouse) {
+					frappe.db.get_value("User", frappe.session.user, "user_warehouse").then((r) => {
+						if (r.message.user_warehouse) {
+							d.warehouse = r.message.user_warehouse;
+							frm.doc.set_warehouse = r.message.user_warehouse;
+						}
+						if (d.rejected_qty > 0) {
+							frappe.db.get_value("Warehouse", frm.doc.set_warehouse, "rejected_warehouse").then((res) => {
+								frm.doc.rejected_warehouse = res.message.rejected_warehouse;
+							});
+							frappe.db.get_value("Warehouse", d.warehouse, "rejected_warehouse").then((res) => {
+								d.rejected_warehouse = res.message.rejected_warehouse;
+							});
+						}
+					});
+				}
+			});
+			frm.refresh_field("items");
+		}
 	}
 });
 
-frappe.ui.form.on("Purchase Receipt", "onload", function (frm, cdt, cdn) {
-	if (frm.doc.docstatus == 0) {
-		$.each(frm.doc.items || [], function (i, d) {
-			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "received_qty", cdt, cdn); }
-		})
-		$.each(frm.doc.items || [], function (i, d) {
-			frappe.call({
-				method: "frappe.client.get",
-				args: {
-					doctype: "User",
-					filters: { "name": frappe.session.user },
-					fieldname: "user_warehouse"
-				},
-				callback: function (r) {
-					if (r.message.user_warehouse) { d.warehouse = r.message.user_warehouse; }
-					d.rejected_warehouse = r.message.user_warehouse.replace("Normal", "Breakage");
-				}
-			})
-		})
-		frm.refresh_field("items");
-	}
-});
-
-// frappe.ui.form.on("Purchase Receipt", "before_submit", function (frm, cdt, cdn) {
-// 	if (frm.doc.docstatus == 0) {
-// 		if (frm.doc.supplier != "S-00095") {
-// 			if (!frm.doc.is_return) {
-// 			//	frm.set_value("discount_amount", (-1 * parseFloat(frm.doc.charge_to_company)));
-// 			}
-// 		}
-// 		$.each(frm.doc.items || [], function (i, d) {
-// 			var tempitemname = d.item_name;
-// 			if (tempitemname.includes("Dummy") == true) {
-// 				frappe.throw("You cannot submit Purchase Receipt if it contains dummy Item");
-// 				frappe.validated = false;
-// 			}
-// 		})
-// 	}
-// })
-
-frappe.ui.form.on('Purchase Receipt Item',
-	{
-		pieces: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "pieces", cdt, cdn); },
-		sqm: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "sqm", cdt, cdn); },
-		boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); },
-		received_qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
-		item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
-		rejected_qty: function (frm, cdt, cdn) { CalculateBreakage(frm); },
-		rate: function (frm, cdt, cdn) { CalculateBreakage(frm); },
-		rejected_boxes: function (frm, cdt, cdn) {
-			var row = locals[cdt][cdn];
-			var total_piece = 0;
-			if (typeof row.def_boxes != 'undefined' && row.def_boxes) {
-				var total_piece = Math.round(row.rejected_boxes * row.def_pieces);
-				var new_rej_sqm = parseFloat((total_piece * (row.def_boxes / row.def_pieces)).toFixed(4));
-				if (new_rej_sqm > 0) {
-					row.rejected_boxes = Math.floor((new_rej_sqm / row.def_boxes).toFixed(4));
-				} else { row.rejected_boxes = Math.ceil((new_rej_sqm / row.def_boxes).toFixed(4)); }
-				row.rejected_pieces = (total_piece % row.def_pieces);
-				frappe.model.set_value(cdt, cdn, 'rejected_qty', new_rej_sqm);
-				frm.refresh_field("items");
+frappe.ui.form.on('Purchase Receipt Item', {
+	pieces: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "pieces", cdt, cdn); },
+	sqm: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "sqm", cdt, cdn); },
+	boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); row.qty = row.received_qty - row.rejected_qty },
+	received_qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
+	item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
+	rejected_qty: function (frm, cdt, cdn) { CalculateBreakage(frm); },
+	rate: function (frm) { CalculateBreakage(frm); },
+	rejected_boxes: function (frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		var total_piece = 0;
+		if (typeof row.def_boxes != 'undefined' && row.def_boxes) {
+			var total_piece = Math.round(row.rejected_boxes * row.def_pieces);
+			var new_rej_sqm = parseFloat((total_piece * (row.def_boxes / row.def_pieces)).toFixed(4));
+			if (new_rej_sqm > 0) {
+				row.rejected_boxes = Math.floor((new_rej_sqm / row.def_boxes).toFixed(4));
+				row.qty = row.received_qty - row.rejected_qty
 			}
-		},
-		rejected_pieces: function (frm, cdt, cdn) {
-			var row = locals[cdt][cdn];
-			var total_piece = 0;
-			var total_piece = Math.round(row.rejected_pieces + (row.rejected_boxes * row.def_pieces));
-			var new_rej_sqm = parseFloat(total_piece * (row.def_boxes / row.def_pieces));
-			row.rejected_boxes = Math.floor(new_rej_sqm / row.def_boxes);
+			else {
+				row.rejected_boxes = Math.ceil((new_rej_sqm / row.def_boxes).toFixed(4));
+			}
 			row.rejected_pieces = (total_piece % row.def_pieces);
 			frappe.model.set_value(cdt, cdn, 'rejected_qty', new_rej_sqm);
 			frm.refresh_field("items");
-		},
-		item_code: function (frm, cdt, cdn) {
-			frappe.model.set_value(cdt, cdn, "received_qty", 1);
-			CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn);
 		}
-	})
+	},
+	rejected_pieces: function (frm, cdt, cdn) {
+		frm.doc.items.forEach((d) => {
+			if(!frm.doc.is_return && d.rejected_pieces < 0) {
+				frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
+			}
+		});
+
+		var row = locals[cdt][cdn];
+		var total_piece = 0;
+		var total_piece = Math.round(row.rejected_pieces + (row.rejected_boxes * row.def_pieces));
+		var new_rej_sqm = parseFloat(total_piece * (row.def_boxes / row.def_pieces));
+
+		row.rejected_boxes = Math.floor(new_rej_sqm / row.def_boxes);
+		row.rejected_pieces = (total_piece % row.def_pieces);
+		row.rejected_qty = new_rej_sqm;
+		row.qty = row.received_qty - row.rejected_qty;
+
+		if (row.rejected_qty > 0) {
+			frappe.db.get_value("Warehouse", frm.doc.set_warehouse, "rejected_warehouse").then((res) => {
+				frm.doc.rejected_warehouse = res.message.rejected_warehouse;
+			});
+			frappe.db.get_value("Warehouse", row.warehouse, "rejected_warehouse").then((res) => {
+				row.rejected_warehouse = res.message.rejected_warehouse;
+			});
+		}
+
+		frm.refresh_field("items");
+	},
+	item_code: function (frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, "received_qty", 1);
+		CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn);
+	}
+});
 
 function CalculateSQM(crow, field, cdt, cdn) {
 	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
@@ -152,27 +152,19 @@ function CalculateSQM(crow, field, cdt, cdn) {
 		cur_frm.refresh_field("items");
 	}
 }
-// function setseries(company) {
-// 	var ret_obj = { series: "" };
-// 	switch (company) {
-// 		case "Turk Tiles": ret_obj.series = "TT-PR-"; break;
-// 	}
 
-// 	return ret_obj;
-// }
 
 function CalculateBreakage(frm) {
 	var total_breakage = 0;
 	$.each(frm.doc.items || [], function (i, d) {
 		if (d.rejected_qty > 0) { total_breakage += d.rejected_qty * d.rate; }
 	})
-	//frm.set_value('breakage_total_amount', total_breakage);
-	//frm.set_value('charge_to_company', total_breakage - frm.doc.charge_to_supplier);
 }
 
-siqbal.stock.PurchaseReceiptController = erpnext.stock.PurchaseReceiptController.extend({
-	refresh: function () {
-		this._super();
+siqbal.stock.PurchaseReceiptController = class PurchaseReceiptController extends erpnext.stock.PurchaseReceiptController {
+	refresh() {
+		var me = this;
+		super.refresh();
 		if (!this.frm.doc.is_return && this.frm.doc.status != "Closed") {
 			if (this.frm.doc.docstatus == 0) {
 				cur_frm.remove_custom_button(__("Purchase Order"), "Get items from");
@@ -197,6 +189,6 @@ siqbal.stock.PurchaseReceiptController = erpnext.stock.PurchaseReceiptController
 			}
 		}
 	}
-});
+};
 
-$.extend(cur_frm.cscript, new siqbal.stock.PurchaseReceiptController({ frm: cur_frm }));
+extend_cscript(cur_frm.cscript, new siqbal.stock.PurchaseReceiptController({ frm: cur_frm }));
