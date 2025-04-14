@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from ts.utils import get_total_item_qty
+from siqbal.utils import get_total_item_qty
 from frappe import _
 
 
