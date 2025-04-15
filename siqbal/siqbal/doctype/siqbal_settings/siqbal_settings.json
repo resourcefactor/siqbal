@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-14 16:04:08.069654",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "taxes_section",
+  "enable_auto_purchase_invoice_creation",
+  "taxes_purchase_invoice",
+  "direct_payment_to_supplier_section",
+  "enable_direct_transfer_to_supplier",
+  "supplier_payment"
+ ],
+ "fields": [
+  {
+   "fieldname": "taxes_section",
+   "fieldtype": "Section Break",
+   "label": "Taxes"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_auto_purchase_invoice_creation",
+   "fieldtype": "Check",
+   "label": "Enable Auto Purchase Invoice Creation"
+  },
+  {
+   "fieldname": "taxes_purchase_invoice",
+   "fieldtype": "Table",
+   "label": "Taxes Purchase Invoice",
+   "options": "Taxes Purchase Invoice"
+  },
+  {
+   "fieldname": "direct_payment_to_supplier_section",
+   "fieldtype": "Section Break",
+   "label": "Direct Payment to Supplier"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_direct_transfer_to_supplier",
+   "fieldtype": "Check",
+   "label": " Enable Direct Transfer to Supplier"
+  },
+  {
+   "fieldname": "supplier_payment",
+   "fieldtype": "Table",
+   "label": "Supplier Payment",
+   "options": "Supplier Payment"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-04-14 16:10:41.124178",
+ "modified_by": "Administrator",
+ "module": "SIqbal",
+ "name": "SIqbal Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
