@@ -128,7 +128,7 @@ doc_events = {
 		"on_submit": [
 			"siqbal.hook_events.sales_invoice.update_reserved_qty",
 			"siqbal.hook_events.sales_invoice.create_purchase_invoices_against_sales_taxes",
-			"siqbal.hook_events.sales_invoice.validate_user_warehouse"
+			"siqbal.hook_events.sales_invoice.validate_user_warehouse",
 		],
 		"on_cancel": "siqbal.hook_events.sales_invoice.update_reserved_qty"
 	},
@@ -137,7 +137,9 @@ doc_events = {
 			"siqbal.hook_events.payment_entry.validate_sales_order",
 			"siqbal.hook_events.payment_entry.validate_salaryslip_amount",
 		],
-		"on_submit": "siqbal.hook_events.payment_entry.update_salaryslip_status",
+		"on_submit": [
+					"siqbal.hook_events.payment_entry.update_salaryslip_status",
+					],
 		"on_cancel": "siqbal.hook_events.payment_entry.update_salaryslip_status",
 		"on_update_after_submit": [
 			"siqbal.hook_events.payment_entry.validate_sales_order",

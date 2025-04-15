@@ -79,27 +79,43 @@ frappe.ui.form.on("Purchase Invoice", {
 	}
 });
 
-function CalculateSQM(row, field, cdt, cdn) {
-	if (typeof row.def_boxes !== 'undefined' && row.def_boxes > 0) {
-		let total_piece = 0.0;
+function CalculateSQM(crow, field, cdt, cdn) {
+	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
+		var total_piece = 0.0;
 		switch (field) {
-			case "pieces": total_piece = Math.round(row.pieces + (row.boxes * row.def_pieces)); break;
-			case "boxes": total_piece = Math.round(row.boxes * row.def_pieces); break;
-			case "sqm": total_piece = Math.round(row.sqm / (row.def_boxes / row.def_pieces)); break;
-			case "qty": total_piece = Math.round(row.qty / (row.def_boxes / row.def_pieces)); break;
+			case "pieces": total_piece = Math.round(crow.pieces + (crow.boxes * crow.def_pieces)); break;
+			case "boxes": total_piece = Math.round(crow.boxes * crow.def_pieces); break;
+			case "sqm": total_piece = Math.round(crow.sqm / (crow.def_boxes / crow.def_pieces)); break;
+			case "qty": total_piece = Math.round(crow.qty / (crow.def_boxes / crow.def_pieces));
 		}
-		let new_sqm = parseFloat((total_piece * (row.def_boxes / row.def_pieces)).toFixed(4));
-		row.boxes = new_sqm > 0 ? Math.floor((new_sqm / row.def_boxes).toFixed(4)) : Math.ceil((new_sqm / row.def_boxes).toFixed(4));
-		row.pieces = total_piece % row.def_pieces;
+		var new_sqm = parseFloat((total_piece * (crow.def_boxes / crow.def_pieces)).toFixed(4));
+		if (new_sqm > 0) {
+			crow.boxes = Math.floor((new_sqm / crow.def_boxes).toFixed(4));
+		} else { crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4)); }
+
+		crow.pieces = (total_piece % crow.def_pieces);
 		frappe.model.set_value(cdt, cdn, 'qty', new_sqm);
-		row.sqm = new_sqm;
+		crow.sqm = new_sqm;
+		cur_frm.refresh_field("items");
 	}
 	else {
-		let val = row[field];
-		row.sqm = row.boxes = row.pieces = row.qty = val;
+		var new_sqm = 0;
+		switch (field) {
+			case "pieces": new_sqm = crow.pieces; break;
+			case "boxes": new_sqm = crow.boxes; break;
+			case "sqm": new_sqm = crow.sqm; break;
+			case "qty": new_sqm = crow.qty; break;
+		}
+		crow.sqm = new_sqm;
+		crow.boxes = new_sqm;
+		crow.pieces = new_sqm;
+		crow.qty = new_sqm;
+		cur_frm.refresh_field("items");
 	}
-	frappe.get_doc(cdt, cdn).refresh();
-	calculate_total_boxes(frappe.get_doc(cdt, cdn).__islocal ? cur_frm : frappe.ui.form.get_form(cdt, cdn));
+	var dt = ["Sales Order Updation", "Stock Reconciliation"];
+	if (!dt.includes(cur_frm.doctype)) {
+		calculate_total_boxes(cur_frm);
+	}
 }
 
 function calculate_total_boxes(frm) {
