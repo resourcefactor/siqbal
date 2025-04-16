@@ -152,7 +152,7 @@
    "field_name": "allocated_amount",
    "idx": 0,
    "is_system_generated": 0,
-   "modified": "2025-04-15 13:57:37.011972",
+   "modified": "2025-04-16 12:49:28.979796",
    "modified_by": "Administrator",
    "module": null,
    "name": "Payment Entry Reference-allocated_amount-width",
