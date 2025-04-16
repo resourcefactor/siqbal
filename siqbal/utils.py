@@ -397,6 +397,79 @@ def ts_make_purchase_order(source_name, target_doc=None):
 
 
 @frappe.whitelist()
+def siqbal_make_payment_request(source_name, target_doc=None):
+	def update_item(obj, target, source_parent):
+		target.qty = flt(obj.qty) - flt(obj.received_qty)
+		target.received_qty = target.qty
+		target.stock_qty = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.conversion_factor)
+		target.amount = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.rate)
+		target.base_amount = (flt(obj.qty) - flt(obj.received_qty)) * \
+			flt(obj.rate) * flt(source_parent.conversion_rate)
+
+	def set_missing_values(source, target):
+		target.ignore_pricing_rule = 1
+		target.run_method("set_missing_values")
+		target.run_method("calculate_taxes_and_totals")
+
+	doc = get_mapped_doc("Purchase Order", source_name, {
+		"Purchase Order": {
+			"doctype": "Payment Request",
+			"field_map": {
+				"per_billed": "per_billed",
+				"supplier_warehouse": "supplier_warehouse",
+				"inter_company_order_reference": "",
+				"party_type": "Supplier",
+				"party": "supplier",
+			},
+			"validation": {
+				"docstatus": ["=", 1],
+			}
+		}
+	}, target_doc, set_missing_values)
+	print("doc", doc)
+	doc.inter_company_order_reference = None
+	return doc
+
+
+@frappe.whitelist()
+def siqbal_make_payment_entry(source_name, target_doc=None):
+	def update_item(obj, target, source_parent):
+		target.qty = flt(obj.qty) - flt(obj.received_qty)
+		target.received_qty = target.qty
+		target.stock_qty = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.conversion_factor)
+		target.amount = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.rate)
+		target.base_amount = (flt(obj.qty) - flt(obj.received_qty)) * \
+			flt(obj.rate) * flt(source_parent.conversion_rate)
+
+	def set_missing_values(source, target):
+		target.ignore_pricing_rule = 1
+		target.run_method("set_missing_values")
+		target.run_method("calculate_taxes_and_totals")
+	supplier = "Supplier"
+	doc = get_mapped_doc("Purchase Order", source_name, {
+		"Purchase Order": {
+			"doctype": "Payment Entry",
+			"field_map": {
+				"per_billed": "per_billed",
+				"supplier_warehouse": "supplier_warehouse",
+				"inter_company_order_reference": "",
+				"party_type": supplier,
+				"party": "supplier",
+			},
+			"validation": {
+				"docstatus": ["=", 1],
+			}
+		},
+		"Purchase Taxes and Charges": {
+			"doctype": "Advance Taxes and Charges",
+			"add_if_empty": True
+		}
+	}, target_doc, set_missing_values)
+	print("doc", doc)
+	doc.inter_company_order_reference = None
+	return doc
+
+@frappe.whitelist()
 def get_delivered_qty(sales_order, item_code, so_item_row):
 	'''
 		returns qty of item in sales order items that needs to be delivered yet,

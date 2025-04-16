@@ -136,9 +136,11 @@ doc_events = {
 		"validate": [
 			"siqbal.hook_events.payment_entry.validate_sales_order",
 			"siqbal.hook_events.payment_entry.validate_salaryslip_amount",
+			
 		],
 		"on_submit": [
 					"siqbal.hook_events.payment_entry.update_salaryslip_status",
+					"siqbal.hook_events.payment_entry.create_payment_entry_against_payment_entry",
 					],
 		"on_cancel": "siqbal.hook_events.payment_entry.update_salaryslip_status",
 		"on_update_after_submit": [

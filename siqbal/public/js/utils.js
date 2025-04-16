@@ -2,7 +2,7 @@
 frappe.provide("siqbal");
 
 
-frappe.ui.form.on("Purchase Invoice", {
+frappe.ui.form.on(cur_frm.doctype, {
 	setup(frm) {
 		frm.wrapper.addEventListener("grid-row-render", (e) => {
 			const grid_row = e.detail;
@@ -37,25 +37,19 @@ frappe.ui.form.on("Purchase Invoice", {
 		}
 	},
 
-	refresh(frm) {
-		const allowed_doctypes = [
-			"Sales Order Updation", "Quotation", "Sales Order", "Sales Invoice", "Delivery Note",
-			"Purchase Order", "Purchase Receipt", "Purchase Invoice", "Stock Entry",
-			"Stock Reconciliation", "Material Request", "Item Label"
-		];
-
-		if (frm.doc.docstatus === 0 && allowed_doctypes.includes(frm.doctype)) {
-			const item_wrapper = frm.fields_dict["items"].$wrapper;
-			const grid_buttons = $(item_wrapper).find(".grid-buttons");
-			if (!grid_buttons.find(".custom-add-multiple-rows").length) {
-				grid_buttons.append(`
-					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default" style="margin-left: 4px;">
+	refresh: function (frm) {
+		if (frm.doc.docstatus == 0 && in_list(["Sales Order Updation", "Quotation", "Sales Order", "Sales Invoice", "Delivery Note", "Purchase Order", "Purchase Receipt", "Purchase Invoice", "Stock Entry", "Stock Reconciliation", "Material Request", "Item Label"], frm.doctype)) {
+			var item_childtable = frm.fields_dict["items"].$wrapper;
+			var grid_buttons = $(item_childtable).find(".grid-buttons");
+			if (!$(grid_buttons).find(".custom-add-multiple-rows").length) {
+				$(grid_buttons).append(`
+					<button type="reset" class="custom-add-multiple-rows btn btn-xs btn-default"
+							style="margin-left: 4px;">
 						Add Items
 					</button>
 				`);
 			}
-
-			grid_buttons.find(".custom-add-multiple-rows").off().click(() => {
+			$(grid_buttons).find(".custom-add-multiple-rows").off().click(function () {
 				frm.events.custom_add_multiple_items(frm);
 			});
 		}
@@ -78,6 +72,310 @@ frappe.ui.form.on("Purchase Invoice", {
 		erpnext.taxes.set_conditional_mandatory_rate_or_amount(frm.open_grid_row());
 	}
 });
+
+
+frappe.provide("frappe");
+
+frappe.custom_mutli_add_dialog = function (frm) {
+	var dialog;
+
+	const custom_warehouse_template1 = `
+	<div style="display:block; max-height:320px; overflow-y:auto;">
+	<table class="table table-bordered table-hover table-condensed custom-item-selection-tool">
+		<thead>
+			<tr>
+				<th style="width: 90px" rowspan="2">Item Name</th>
+				<th style="width: 360px" rowspan="2">Details</th>
+				<th style="width: 80px" >Avail. Qty</th>
+				<th style="width: 180px" colspan="3">Present Qty</th>
+				<th style="width: 180px" colspan="3">Reserved Qty</th>
+			</tr>
+			<tr>
+				<th>SQM</th>
+				<th>SQM</th>
+				<th>Boxes</th>
+				<th>Pieces</th>
+				<th>SQM</th>
+				<th>Boxes</th>
+				<th>Pieces</th>
+			</tr>
+		</thead>
+		<tbody>
+	`;
+
+	const custom_warehouse_template2 = `</tbody></table></div>`;
+
+	const custom_warehousewise_template1 = `
+		<table class="table table-bordered table-hover table-condensed custom-warehouse-detail-tool">
+			<thead>
+				<tr>
+					<th style="width: 280px" rowspan="2">Warehouse Name</th>
+					<th style="width: 90px" >Avail. Qty</th>
+					<th style="width: 210px" colspan="3">Present Qty</th>
+					<th style="width: 210px" colspan="3">Reserved Qty</th>
+				</tr>
+				<tr>
+					<th>SQM</th>
+					<th>SQM</th>
+					<th>Boxes</th>
+					<th>Pieces</th>
+					<th>SQM</th>
+					<th>Boxes</th>
+					<th>Pieces</th>
+				</tr>
+			</thead>
+			<tbody>
+		`;
+
+	let fields = [
+		{
+			"label": __("Items Beginning with"),
+			"fieldname": "item_search",
+			"fieldtype": "Data"
+		},
+		{
+			"label": __("Search"),
+			"fieldname": "item_search_button",
+			"fieldtype": "Button"
+		},
+		{
+			"fieldname": "section_break",
+			"fieldtype": "Section Break"
+		},
+		{
+			"label": __("Item Name"),
+			"fieldname": "item_code",
+			"fieldtype": "Link",
+			"options": "Item",
+			"onchange": function () {
+				renderWarehousewiseItemDetails(frm);
+			},
+			"reqd": 1,
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break",
+			"fieldtype": "Column Break"
+		},
+		{
+			"label": __("Quantity (SQM)"),
+			"fieldname": "quantity",
+			"fieldtype": "Float",
+			"reqd": 1
+		},
+		{
+			"fieldname": "section_break",
+			"fieldtype": "Section Break"
+		},
+		{
+			"label": __("Item Detials"),
+			"fieldname": "item_html",
+			"fieldtype": "HTML"
+		}
+	];
+	dialog = new frappe.ui.Dialog({
+		title: __("Select Mutliple Items"),
+		fields: fields,
+		primary_action: function (values) {
+			custom_add_item(frm, values.item_code, values.quantity);
+			dialog.fields_dict.item_search_button.input.click();
+		},
+		primary_action_label: __("Add"),
+		width: 800
+	});
+
+	dialog.fields_dict.item_search_button.input.onclick = function (frm) {
+		get_item_details(true);
+	}
+
+	frappe.ui.keys.on("ctrl+f", function () {
+		dialog.fields_dict.item_search_button.input.click();
+	});
+
+	function get_item_details(via_search) {
+		// backend call to find the item details
+		let txt = dialog.get_field("item_search").get_value();
+		let item_code = '';
+		if (!via_search) {
+			item_code = dialog.get_field("item_code").get_value();
+		}
+		if (txt && txt != frappe.custom_item_details_string) {
+			frappe.call({
+				method: "siqbal.utils.get_item_details",
+				args: {
+					args: {
+						txt: txt,
+						item_code: item_code,
+						customer: frm.doc.customer,
+						update_stock: frm.doc.update_stock,
+						company: frm.doc.company,
+						order_type: frm.doc.order_type,
+						transaction_date: frm.doc.transaction_date,
+						doctype: frm.doc.doctype,
+						name: frm.doc.name
+					}
+				},
+				callback: function (r) {
+					frappe.custom_item_details = r.message;
+					frappe.custom_item_details_string = txt;
+					createItemDetailTemplate(frm);
+				}
+			});
+		} else if (true) {
+			createItemDetailTemplate(frm);
+		}
+	}
+
+	function createItemDetailTemplate(frm) {
+		let customItemDetailsTemplate = '';
+		let item_details = frappe.custom_item_details;
+		if (item_details) {
+			// create the sorted dict
+			let sortedItems = Object.keys(item_details).map(function (key) {
+				let data = item_details[key]['item_stock_totals'];
+				return [key, data['actual_qty'] - data['reserved_qty']];
+			});
+			sortedItems.sort(function (first, second) {
+				return second[1] - first[1];
+			});
+
+			customItemDetailsTemplate += custom_warehouse_template1;
+			for (let item of sortedItems) {
+				item = item[0];
+				let actual_qty_sqm = item_details[item]["item_stock_totals"]["actual_qty"];
+				let actual_qty_box = actual_qty_sqm / item_details[item]["uom_box"];
+				actual_qty_box = Math.floor(actual_qty_box + .0001);
+				let actual_qty_pieces = Math.round(actual_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];
+				let reserved_qty_sqm = item_details[item]["item_stock_totals"]["reserved_qty"];
+				let reserved_qty_box = reserved_qty_sqm / item_details[item]["uom_box"];
+				reserved_qty_box = Math.floor(reserved_qty_box + .0001);
+				let reserved_qty_pieces = Math.round(reserved_qty_sqm / (item_details[item]["uom_box"] / item_details[item]["uom_pieces"])) % item_details[item]["uom_pieces"];
+				customItemDetailsTemplate += `
+					<tr data-item=${item} class="custom-item-row">
+						<td>${item}</td>
+						<td>${item_details[item]["item_details"]}</td>
+						<td><b>${flt(actual_qty_sqm - reserved_qty_sqm, 3)}</b></td>
+						<td>${flt(actual_qty_sqm, 3)}</td>
+						<td>${flt(actual_qty_box, 3) || 0}</td>
+						<td>${flt(actual_qty_pieces, 3) || 0}</td>
+						<td>${flt(reserved_qty_sqm, 3)}</td>
+						<td>${flt(reserved_qty_box, 3) || 0}</td>
+						<td>${flt(reserved_qty_pieces, 3) || 0}</td>
+					</tr>`;
+			}
+
+			customItemDetailsTemplate += custom_warehouse_template2;
+		} else {
+			customItemDetailsTemplate += `<div>No Item stock details found.</div>`;
+		}
+		render_html_template(frm, customItemDetailsTemplate);
+	}
+
+	function renderWarehousewiseItemDetails(frm) {
+		let customWarehouseDetailsTemplate = '';
+		// let item_details = frappe.custom_item_details;
+		let item_code = dialog.get_field("item_code").get_value();
+		let warehouse_dict = frappe.custom_item_details[item_code]["warehouse_details"]
+		if (Object.keys(warehouse_dict).length) {
+			customWarehouseDetailsTemplate += custom_warehousewise_template1;
+			for (let warehouse in warehouse_dict) {
+				let actual_qty_sqm = warehouse_dict[warehouse]["actual_qty"];
+				let reserved_qty_sqm = warehouse_dict[warehouse]["reserved_qty"];
+
+				if (actual_qty_sqm != 0 || reserved_qty_sqm != 0) {
+					let actual_qty_box = actual_qty_sqm / warehouse_dict[warehouse]["uom_box"];
+					actual_qty_box = Math.floor(actual_qty_box + .0001);
+					let actual_qty_pieces = Math.round(actual_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
+					let reserved_qty_box = reserved_qty_sqm / warehouse_dict[warehouse]["uom_box"];
+					reserved_qty_box = Math.floor(reserved_qty_box + .0001);
+					let reserved_qty_pieces = Math.round(reserved_qty_sqm / (warehouse_dict[warehouse]["uom_box"] / warehouse_dict[warehouse]["uom_pieces"])) % warehouse_dict[warehouse]["uom_pieces"];
+					customWarehouseDetailsTemplate += `
+					<tr data-item=${warehouse} class="custom-item-row">
+						<td>${warehouse}</td>
+						<td><b>${flt(actual_qty_sqm - reserved_qty_sqm, 3)}</b></td>
+						<td>${flt(actual_qty_sqm, 3)}</td>
+						<td>${flt(actual_qty_box, 3) || 0}</td>
+						<td>${flt(actual_qty_pieces, 3) || 0}</td>
+						<td>${flt(reserved_qty_sqm, 3)}</td>
+						<td>${flt(reserved_qty_box, 3) || 0}</td>
+						<td>${flt(reserved_qty_pieces, 3) || 0}</td>
+					</tr>
+					`;
+				}
+			}
+			customWarehouseDetailsTemplate += custom_warehouse_template2;
+		} else {
+			customWarehouseDetailsTemplate += `<div>No Warehouse details found.</div>`
+		}
+		render_html_template(frm, customWarehouseDetailsTemplate, true);
+	}
+
+	function render_html_template(frm, htmlTemplate, warehouseWiseDetails = false) {
+		var item_html_df = dialog.get_field("item_html");
+		$(item_html_df.wrapper).empty();
+		var warehouse_table = $(frappe.render_template(htmlTemplate));
+		warehouse_table.appendTo(item_html_df.wrapper);
+
+		if (!warehouseWiseDetails) {
+			$(".custom-item-row").click(function () {
+				let old_item_code = dialog.get_value("item_code");
+				let old_quantity = dialog.get_value("quantity");
+				let new_quantity = 1;
+				let itme_clicked = $(this).attr("data-item");
+
+				console.log("--itme_clicked-----", itme_clicked)
+				dialog.set_value("item_code", itme_clicked);
+				if (old_item_code === itme_clicked) {
+					new_quantity = old_quantity + 1;
+				}
+				dialog.set_value("quantity", new_quantity);
+			})
+		}
+	}
+
+	function custom_add_item(frm, item_code, item_qty) {
+		// add row or update qty
+		var added = false;
+
+		// find row with item if exists
+		$.each(frm.doc.items || [], (i, d) => {
+			if (d["item_code"] === item_code) {
+				frappe.model.set_value(d.doctype, d.name, 'qty', d.qty + item_qty);
+				frappe.show_alert({ message: __("Added Item  {0} {1}", [item_code, item_qty]), indicator: 'green' });
+				added = true;
+				return false;
+			}
+		});
+
+		if (!added) {
+			var childDoctype = frm.doctype == "Sales Order Updation" ? "SO Updation Item" : frm.doctype + " Item";
+			var item_row = frappe.model.add_child(frm.doc, childDoctype, "items");
+			item_row.item_code = item_code;
+			item_row.qty = item_qty;
+			if (frappe.custom_item_details[item_code]) {
+				item_row.def_boxes = frappe.custom_item_details[item_code]["uom_box"];
+				item_row.def_pieces = frappe.custom_item_details[item_code]["uom_pieces"];
+			}
+
+			frm.refresh_field("items");
+
+			frappe.run_serially([
+				() => frappe.model.set_value(item_row.doctype, item_row.name, "item_code", item_row.item_code),
+				() => frm.script_manager.trigger("item_code", item_row.doctype, item_row.name),
+				() => frappe.model.set_value(item_row.doctype, item_row.name, 'qty', item_qty),
+				() => frm.script_manager.trigger("qty", item_row.doctype, item_row.name),
+				() => frappe.timeout(0.1),
+				() => {
+					frm.refresh_field("items");
+					frappe.show_alert({ message: __("Added Item - {0} with quantity - {1}", [item_code, item_qty]), indicator: 'green' });
+				}
+			]);
+		}
+	}
+	return dialog;
+}
+
+
 
 function CalculateSQM(crow, field, cdt, cdn) {
 	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
