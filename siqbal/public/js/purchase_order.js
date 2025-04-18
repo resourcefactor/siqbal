@@ -14,6 +14,7 @@ frappe.ui.form.on("Purchase Order", {
 	// setup(frm) {
 	// 	frm._controller = new siqbal.buying.PurchaseOrderController({ frm });
 	// }
+
 });
 
 
@@ -124,6 +125,7 @@ siqbal.buying.PurchaseOrderController = class PurchaseOrderController extends er
 								cannot_add_row: false,
 							});
 						});
+						calculate_total_boxes(this.frm);
 					}
 				}
 				if (this.frm.has_perm("submit")) {
@@ -253,3 +255,5 @@ siqbal.buying.PurchaseOrderController = class PurchaseOrderController extends er
 };
 
 extend_cscript(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
+
+

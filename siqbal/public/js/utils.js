@@ -419,7 +419,7 @@ function CalculateSQM(crow, field, cdt, cdn) {
 function calculate_total_boxes(frm) {
 	let totalqty = 0, totalbox = 0, totalpieces = 0, loosetotal = 0;
 	(frm.doc.items || []).forEach(d => {
-		totalqty += d.qty;
+		totalqty += d.sqm;
 		totalbox += d.boxes;
 		totalpieces += d.pieces;
 		loosetotal += (d.boxes * d.def_pieces) + d.pieces;

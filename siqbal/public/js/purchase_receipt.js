@@ -68,31 +68,55 @@ frappe.ui.form.on('Purchase Receipt Item', {
 	rejected_qty: function (frm, cdt, cdn) { CalculateBreakage(frm); },
 	rate: function (frm) { CalculateBreakage(frm); },
 	rejected_boxes: function (frm, cdt, cdn) {
-		var row = locals[cdt][cdn];
-		var total_piece = 0;
-		if (typeof row.def_boxes != 'undefined' && row.def_boxes) {
-			var total_piece = Math.round(row.rejected_boxes * row.def_pieces);
-			var new_rej_sqm = parseFloat((total_piece * (row.def_boxes / row.def_pieces)).toFixed(4));
-			if (new_rej_sqm > 0) {
-				row.rejected_boxes = Math.floor((new_rej_sqm / row.def_boxes).toFixed(4));
-				row.qty = row.received_qty - row.rejected_qty
-			}
-			else {
-				row.rejected_boxes = Math.ceil((new_rej_sqm / row.def_boxes).toFixed(4));
-			}
-			row.rejected_pieces = (total_piece % row.def_pieces);
-			frappe.model.set_value(cdt, cdn, 'rejected_qty', new_rej_sqm);
-			frm.refresh_field("items");
-		}
-	},
-	rejected_pieces: function (frm, cdt, cdn) {
 		frm.doc.items.forEach((d) => {
-			if(!frm.doc.is_return && d.rejected_pieces < 0) {
+			if (!frm.doc.is_return && d.rejected_boxes < 0) {
 				frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
 			}
 		});
 
 		var row = locals[cdt][cdn];
+		var total_piece = 0;
+		if (typeof row.def_boxes != 'undefined' && row.def_boxes) {
+			var total_piece = Math.round(row.rejected_boxes * row.def_pieces);
+			var new_rej_sqm = parseFloat((total_piece * (row.def_boxes / row.def_pieces)).toFixed(4));
+
+			if (new_rej_sqm > 0) {
+				row.rejected_boxes = Math.floor((new_rej_sqm / row.def_boxes).toFixed(4));
+				// row.qty = row.received_qty - row.rejected_qty;
+			}
+			else {
+				row.rejected_boxes = Math.ceil((new_rej_sqm / row.def_boxes).toFixed(4));
+			}
+
+			row.rejected_pieces = (total_piece % row.def_pieces);
+			row.rejected_qty = new_rej_sqm;
+			row.qty = row.received_qty - row.rejected_qty;
+		}
+
+		if (row.rejected_qty > 0) {
+			frappe.db.get_value("Warehouse", frm.doc.set_warehouse, "rejected_warehouse").then((res) => {
+				frm.set_value("rejected_warehouse", res.message.rejected_warehouse);
+			});
+			frappe.db.get_value("Warehouse", row.warehouse, "rejected_warehouse", (res) => {
+				frappe.model.set_value(cdt, cdn, "rejected_warehouse", res.message.rejected_warehouse);
+			});
+		}
+
+		frm.refresh_field("items");
+	},
+	rejected_pieces: function (frm, cdt, cdn) {
+		frm.doc.items.forEach((d) => {
+			if (!frm.doc.is_return && d.rejected_pieces < 0) {
+				frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
+			}
+		});
+
+		var row = locals[cdt][cdn];
+		if (!row.rejected_pieces) {
+			row.rejected_pieces = 0;
+		} else if (!row.rejected_boxes) {
+			row.rejected_boxes = 0;
+		}
 		var total_piece = 0;
 		var total_piece = Math.round(row.rejected_pieces + (row.rejected_boxes * row.def_pieces));
 		var new_rej_sqm = parseFloat(total_piece * (row.def_boxes / row.def_pieces));
@@ -113,6 +137,7 @@ frappe.ui.form.on('Purchase Receipt Item', {
 
 		frm.refresh_field("items");
 	},
+
 	item_code: function (frm, cdt, cdn) {
 		frappe.model.set_value(cdt, cdn, "received_qty", 1);
 		CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn);
@@ -136,7 +161,9 @@ function CalculateSQM(crow, field, cdt, cdn) {
 			crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4));
 		}
 		crow.pieces = (total_piece % crow.def_pieces);
-		frappe.model.set_value(cdt, cdn, 'received_qty', new_sqm);
+		crow.received_qty = new_sqm;
+		// frappe.model.set_value(cdt, cdn, 'received_qty', new_sqm);
+		frappe.model.set_value(cdt, cdn, "qty", crow.received_qty - crow.rejected_qty);
 		crow.sqm = new_sqm;
 		cur_frm.refresh_field("items");
 	}
