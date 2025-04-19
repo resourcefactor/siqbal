@@ -241,9 +241,10 @@ siqbal.buying.PurchaseOrderController = class PurchaseOrderController extends er
 
 				cur_frm.page.set_inner_btn_group_as_primary(__("Create"));
 			}
-		} else if (doc.docstatus === 0) {
-			cur_frm.cscript.add_from_mappers();
-		}
+		} 
+		// else if (doc.docstatus === 0) {
+		// 	cur_frm.cscript.add_from_mappers();
+		// }
 	}
 
 	ts_make_purchase_receipt() {
