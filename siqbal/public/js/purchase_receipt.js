@@ -2,6 +2,11 @@
 frappe.provide('siqbal.stock');
 
 frappe.ui.form.on('Purchase Receipt', {
+	charge_to_supplier: function (frm) {
+		if (frm.doc.docstatus === 0) {
+			frm.set_value("charge_to_company", (parseFloat(frm.doc.breakage_total_amount) - parseFloat(frm.doc.charge_to_supplier)));
+		}
+	},
 	validate: function (frm, cdt, cdn) {
 		if (frm.doc.docstatus === 0) {
 			validateBoxes(frm);
@@ -29,6 +34,8 @@ frappe.ui.form.on('Purchase Receipt', {
 				}
 			});
 			calculate_total_boxes(frm);
+			calculate_rabate_and_discount_amount(frm);
+			validate_rabate_and_discount_amount(frm);
 		}
 	},
 	onload: function (frm, cdt, cdn) {
@@ -52,6 +59,32 @@ frappe.ui.form.on('Purchase Receipt', {
 							});
 						}
 					});
+					if (d.item_group && !d.rebate_rate) {
+						frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+							frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
+						});
+					} else if (!d.item_group) {
+						frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
+					}
+					if (!frm.doc.is_return && d.rejected_boxes < 0) {
+						frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
+					} else if (!frm.doc.is_return && d.rejected_pieces < 0) {
+						frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
+					}
+				}
+			});
+			frm.refresh_field("items");
+		}
+		if (frm.is_new()) {
+			frm.doc.items.forEach((d) => {
+				if (d.item_group && !d.rebate_rate) {
+					frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+						d.rebate_rate = r.rebate_rate;
+						frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
+						calculate_rabate_and_discount_amount(frm);
+					});
+				} else if (!d.item_group) {
+					frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
 				}
 			});
 			frm.refresh_field("items");
@@ -139,9 +172,22 @@ frappe.ui.form.on('Purchase Receipt Item', {
 	},
 
 	item_code: function (frm, cdt, cdn) {
+		var d = locals[cdt][cdn];
 		frappe.model.set_value(cdt, cdn, "received_qty", 1);
 		CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn);
-	}
+		if (d.item_group) {
+			frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+				d.rebate_rate = r.rebate_rate;
+			});
+		}
+		frm.refresh_field("items");
+	},
+	rebate_rate: function (frm) {
+		calculate_rabate_and_discount_amount(frm);
+	},
+	discounted_rate: function (frm) {
+		calculate_rabate_and_discount_amount(frm);
+	},
 });
 
 function CalculateSQM(crow, field, cdt, cdn) {
@@ -183,10 +229,66 @@ function CalculateSQM(crow, field, cdt, cdn) {
 
 function CalculateBreakage(frm) {
 	var total_breakage = 0;
-	$.each(frm.doc.items || [], function (i, d) {
-		if (d.rejected_qty > 0) { total_breakage += d.rejected_qty * d.rate; }
-	})
+	frm.doc.items.forEach((d) => {
+		if (d.rejected_qty > 0) {
+			total_breakage += d.rejected_qty * d.rate;
+		}
+	});
+	frm.set_value('breakage_total_amount', total_breakage);
+	frm.set_value('charge_to_company', total_breakage - frm.doc.charge_to_supplier);
 }
+
+function calculate_rabate_and_discount_amount(frm) {
+	frm.doc.total_rebate_amount = 0;
+	frm.doc.total_discounted_amount = 0;
+	frm.doc.items.forEach((d) => {
+		if (d.rebate_rate >= 0) {
+			d.rebate_amount = 0;
+			d.rebate_amount = d.qty * d.rebate_rate;
+			frm.doc.total_rebate_amount += d.rebate_amount;
+		}
+		if (d.discounted_rate >= 0) {
+			d.discounted_amount = 0;
+			d.discounted_amount = d.qty * d.discounted_rate;
+			frm.doc.total_discounted_amount += d.discounted_amount;
+		}
+	});
+	frm.refresh_field("items");
+}
+
+function validate_rabate_and_discount_amount(frm) {
+	if (!frm.doc.is_return) {
+		frm.doc.items.forEach((d) => {
+			if (d.rate && d.rate < d.rebate_rate) {
+				frappe.throw(
+					__("Row {0}: Rebate Rate {1} must be less than Rate {2}", [
+						d.idx,
+						d.rebate_rate,
+						d.rate,
+					])
+				);
+			} else if (d.rate < d.discounted_rate) {
+				frappe.throw(
+					__("Row {0}: Discounted Rate {1} must be less than Rate {2}", [
+						d.idx,
+						d.discounted_rate,
+						d.rate,
+					])
+				);
+			} else if (d.amount < (d.rebate_amount + d.discounted_amount)) {
+				frappe.throw(
+					__("Row {0}: Rebate and Discounted Amount {1} must be less than Item Amount {2}", [
+						d.idx,
+						(d.rebate_amount + d.discounted_amount),
+						d.amount,
+					])
+				);
+			}
+		});
+	}
+}
+
+
 
 siqbal.stock.PurchaseReceiptController = class PurchaseReceiptController extends erpnext.stock.PurchaseReceiptController {
 	refresh() {

@@ -96,16 +96,261 @@ frappe.ui.form.on('Sales Order Item', {
 	}
 });
 
+
+
 siqbal.selling.SalesOrderController = class SalesOrderController extends erpnext.selling.SellingController {
 	onload(doc, dt, dn) {
 		super.onload(doc, dt, dn);
 	}
 	refresh(doc, dt, dn) {
-		this._super(doc);
+		super.refresh(doc);
 		var me = this;
+		let allow_delivery = false;
 		me.make_sales_invoice = this.ts_make_sales_invoice
 		me.make_material_request = this.ts_make_material_request;
 		me.make_delivery_note_based_on_delivery_date = this.ts_make_delivery_note_based_on_delivery_date;
+		if (doc.docstatus == 1) {
+			if (this.frm.has_perm("submit")) {
+				if (doc.status === "On Hold") {
+					// un-hold
+					this.frm.add_custom_button(
+						__("Resume"),
+						function () {
+							me.frm.cscript.update_status("Resume", "Draft");
+						},
+						__("Status")
+					);
+
+					if (flt(doc.per_delivered) < 100 || flt(doc.per_billed) < 100) {
+						// close
+						this.frm.add_custom_button(__("Close"), () => this.close_sales_order(), __("Status"));
+					}
+				} else if (doc.status === "Closed") {
+					// un-close
+					this.frm.add_custom_button(
+						__("Re-open"),
+						function () {
+							me.frm.cscript.update_status("Re-open", "Draft");
+						},
+						__("Status")
+					);
+				}
+			}
+			if (doc.status !== "Closed") {
+				if (doc.status !== "On Hold") {
+					allow_delivery =
+						this.frm.doc.items.some(
+							(item) => item.delivered_by_supplier === 0 && item.qty > flt(item.delivered_qty)
+						) && !this.frm.doc.skip_delivery_note;
+
+					if (this.frm.has_perm("submit")) {
+						if (flt(doc.per_delivered) < 100 || flt(doc.per_billed) < 100) {
+							// hold
+							this.frm.add_custom_button(
+								__("Hold"),
+								() => this.hold_sales_order(),
+								__("Status")
+							);
+							// close
+							this.frm.add_custom_button(
+								__("Close"),
+								() => this.close_sales_order(),
+								__("Status")
+							);
+						}
+					}
+
+					if (
+						(!doc.__onload || !doc.__onload.has_reserved_stock) &&
+						flt(doc.per_picked) < 100 &&
+						flt(doc.per_delivered) < 100 &&
+						frappe.model.can_create("Pick List")
+					) {
+						this.frm.add_custom_button(
+							__("Pick List"),
+							() => this.create_pick_list(),
+							__("Create")
+						);
+					}
+
+					const order_is_a_sale = ["Sales", "Shopping Cart"].indexOf(doc.order_type) !== -1;
+					const order_is_maintenance = ["Maintenance"].indexOf(doc.order_type) !== -1;
+					// order type has been customised then show all the action buttons
+					const order_is_a_custom_sale =
+						["Sales", "Shopping Cart", "Maintenance"].indexOf(doc.order_type) === -1;
+
+					// delivery note
+					if (
+						flt(doc.per_delivered) < 100 &&
+						(order_is_a_sale || order_is_a_custom_sale) &&
+						allow_delivery
+					) {
+						if (frappe.model.can_create("Delivery Note")) {
+							this.frm.add_custom_button(
+								__("Delivery Note"),
+								() => this.make_delivery_note_based_on_delivery_date(true),
+								__("Create")
+							);
+						}
+
+						if (frappe.model.can_create("Work Order")) {
+							this.frm.add_custom_button(
+								__("Work Order"),
+								() => this.make_work_order(),
+								__("Create")
+							);
+						}
+					}
+
+					// sales invoice
+					if (flt(doc.per_billed) < 100 && frappe.model.can_create("Sales Invoice")) {
+						this.frm.add_custom_button(
+							__("Sales Invoice"),
+							() => me.make_sales_invoice(),
+							__("Create")
+						);
+					}
+
+					// material request
+					if (
+						(!doc.order_type ||
+							((order_is_a_sale || order_is_a_custom_sale) && flt(doc.per_delivered) < 100)) &&
+						frappe.model.can_create("Material Request")
+					) {
+						this.frm.add_custom_button(
+							__("Material Request"),
+							() => this.make_material_request(),
+							__("Create")
+						);
+						this.frm.add_custom_button(
+							__("Request for Raw Materials"),
+							() => this.make_raw_material_request(),
+							__("Create")
+						);
+					}
+
+					// Make Purchase Order
+					if (!this.frm.doc.is_internal_customer && frappe.model.can_create("Purchase Order")) {
+						this.frm.add_custom_button(
+							__("Purchase Order"),
+							() => this.make_purchase_order(),
+							__("Create")
+						);
+					}
+
+					// maintenance
+					if (flt(doc.per_delivered) < 100 && (order_is_maintenance || order_is_a_custom_sale)) {
+						if (frappe.model.can_create("Maintenance Visit")) {
+							this.frm.add_custom_button(
+								__("Maintenance Visit"),
+								() => this.make_maintenance_visit(),
+								__("Create")
+							);
+						}
+						if (frappe.model.can_create("Maintenance Schedule")) {
+							this.frm.add_custom_button(
+								__("Maintenance Schedule"),
+								() => this.make_maintenance_schedule(),
+								__("Create")
+							);
+						}
+					}
+
+					// project
+					if (flt(doc.per_delivered) < 100 && frappe.model.can_create("Project")) {
+						this.frm.add_custom_button(__("Project"), () => this.make_project(), __("Create"));
+					}
+
+					if (
+						doc.docstatus === 1 &&
+						!doc.inter_company_order_reference &&
+						frappe.model.can_create("Purchase Order")
+					) {
+						let me = this;
+						let internal = me.frm.doc.is_internal_customer;
+						if (internal) {
+							let button_label =
+								me.frm.doc.company === me.frm.doc.represents_company
+									? "Internal Purchase Order"
+									: "Inter Company Purchase Order";
+
+							me.frm.add_custom_button(
+								button_label,
+								function () {
+									me.make_inter_company_order();
+								},
+								__("Create")
+							);
+						}
+					}
+				}
+				// payment request
+				if (flt(doc.per_billed) < 100 + frappe.boot.sysdefaults.over_billing_allowance) {
+					this.frm.add_custom_button(
+						__("Payment Request"),
+						() => this.make_payment_request(),
+						__("Create")
+					);
+
+					if (frappe.model.can_create("Payment Entry")) {
+						this.frm.add_custom_button(
+							__("Payment"),
+							() => this.make_payment_entry(),
+							__("Create")
+						);
+					}
+				}
+				this.frm.page.set_inner_btn_group_as_primary(__("Create"));
+			}
+		}
+
+		if (this.frm.doc.docstatus === 0 && frappe.model.can_read("Quotation")) {
+			this.frm.add_custom_button(
+				__("Quotation"),
+				function () {
+					let d = erpnext.utils.map_current_doc({
+						method: "erpnext.selling.doctype.quotation.quotation.make_sales_order",
+						source_doctype: "Quotation",
+						target: me.frm,
+						setters: [
+							{
+								label: __("Customer"),
+								fieldname: "party_name",
+								fieldtype: "Link",
+								options: "Customer",
+								default: me.frm.doc.customer || undefined,
+							},
+						],
+						get_query_filters: {
+							company: me.frm.doc.company,
+							docstatus: 1,
+							status: ["!=", "Lost"],
+						},
+					});
+
+					setTimeout(() => {
+						d.$parent.append(`
+							<span class='small text-muted'>
+								${__("Note: Please create Sales Orders from individual Quotations to select from among Alternative Items.")}
+							</span>
+					`);
+					}, 200);
+				},
+				__("Get Items From")
+			);
+		}
+		this.order_type(doc);
+	}
+
+	order_type() {
+		this.toggle_delivery_date();
+	}
+
+	toggle_delivery_date() {
+		this.frm.fields_dict.items.grid.toggle_reqd(
+			"delivery_date",
+			this.frm.doc.order_type == "Sales" && !this.frm.doc.skip_delivery_note
+		);
 	}
 
 	ts_make_sales_invoice() {
