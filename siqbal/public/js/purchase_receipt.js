@@ -59,13 +59,13 @@ frappe.ui.form.on('Purchase Receipt', {
 							});
 						}
 					});
-					if (d.item_group && !d.rebate_rate) {
-						frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
-							frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
-						});
-					} else if (!d.item_group) {
-						frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
-					}
+					// if (d.item_group && !d.rebate_rate) {
+					// 	frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+					// 		frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
+					// 	});
+					// } else if (!d.item_group) {
+					// 	frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
+					// }
 					if (!frm.doc.is_return && d.rejected_boxes < 0) {
 						frappe.throw(__("Row {0}: Rejected Quantity cannot be Negative", [d.idx]));
 					} else if (!frm.doc.is_return && d.rejected_pieces < 0) {
@@ -75,20 +75,20 @@ frappe.ui.form.on('Purchase Receipt', {
 			});
 			frm.refresh_field("items");
 		}
-		if (frm.is_new()) {
-			frm.doc.items.forEach((d) => {
-				if (d.item_group && !d.rebate_rate) {
-					frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
-						d.rebate_rate = r.rebate_rate;
-						frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
-						calculate_rabate_and_discount_amount(frm);
-					});
-				} else if (!d.item_group) {
-					frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
-				}
-			});
-			frm.refresh_field("items");
-		}
+		// if (frm.is_new()) {
+		// 	frm.doc.items.forEach((d) => {
+		// 		if (d.item_group && !d.rebate_rate) {
+		// 			frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+		// 				d.rebate_rate = r.rebate_rate;
+		// 				frappe.model.set_value(cdt, cdn, "rebate_rate", r.rebate_rate);
+		// 				calculate_rabate_and_discount_amount(frm);
+		// 			});
+		// 		} else if (!d.item_group) {
+		// 			frappe.model.set_value(cdt, cdn, "rebate_rate", 0);
+		// 		}
+		// 	});
+		// 	frm.refresh_field("items");
+		// }
 	}
 });
 
@@ -175,11 +175,11 @@ frappe.ui.form.on('Purchase Receipt Item', {
 		var d = locals[cdt][cdn];
 		frappe.model.set_value(cdt, cdn, "received_qty", 1);
 		CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn);
-		if (d.item_group) {
-			frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
-				d.rebate_rate = r.rebate_rate;
-			});
-		}
+		// if (d.item_group) {
+		// 	frappe.db.get_value("Item Group", d.item_group, "rebate_rate", (r) => {
+		// 		d.rebate_rate = r.rebate_rate;
+		// 	});
+		// }
 		frm.refresh_field("items");
 	},
 	rebate_rate: function (frm) {
@@ -259,15 +259,16 @@ function calculate_rabate_and_discount_amount(frm) {
 function validate_rabate_and_discount_amount(frm) {
 	if (!frm.doc.is_return) {
 		frm.doc.items.forEach((d) => {
-			if (d.rate && d.rate < d.rebate_rate) {
-				frappe.throw(
-					__("Row {0}: Rebate Rate {1} must be less than Rate {2}", [
-						d.idx,
-						d.rebate_rate,
-						d.rate,
-					])
-				);
-			} else if (d.rate < d.discounted_rate) {
+			// if (d.rate && d.rate < d.rebate_rate) {
+			// 	frappe.throw(
+			// 		__("Row {0}: Rebate Rate {1} must be less than Rate {2}", [
+			// 			d.idx,
+			// 			d.rebate_rate,
+			// 			d.rate,
+			// 		])
+			// 	);
+			// }
+			if (d.rate < d.discounted_rate) {
 				frappe.throw(
 					__("Row {0}: Discounted Rate {1} must be less than Rate {2}", [
 						d.idx,
