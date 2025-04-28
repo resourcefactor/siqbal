@@ -95,8 +95,22 @@ def validate_discount_while_return(si, method):
                 frappe.throw(_("Invoice(s) against the Sales Order was settled with discount of amount {0} {1}".format(currency, total_discount)))
 
 
+# def validate_user_warehouse(si, method):
+#     if si.update_stock:
+#         user_warehouse = frappe.db.get_value("User", {"name": frappe.session['user']}, "user_warehouse")
+#         if si.is_return and not si.approval_receive_in_breakage:
+#             for item in si.items:
+#                 if not (item.warehouse in user_warehouse):
+#                     frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>").format(item.warehouse, item.item_code))
+#         else:
+#             for item in si.items:
+#                 if not (item.warehouse in user_warehouse or item.warehouse in (user_warehouse.replace("Normal", "Breakage")) or item.warehouse in (user_warehouse.replace("Depot", "Breakage"))):
+#                     frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>").format(item.warehouse, item.item_code))
 def validate_user_warehouse(si, method):
-    if si.update_stock:
+    allow_all_warehouses = frappe.db.get_value(
+        "User", {"name": frappe.session["user"]}, "allow_all_warehouses"
+    )
+    if int(allow_all_warehouses) == 0 and si.update_stock:
         user_warehouse = frappe.db.get_value("User", {"name": frappe.session['user']}, "user_warehouse")
         if si.is_return and not si.approval_receive_in_breakage:
             for item in si.items:
@@ -106,7 +120,6 @@ def validate_user_warehouse(si, method):
             for item in si.items:
                 if not (item.warehouse in user_warehouse or item.warehouse in (user_warehouse.replace("Normal", "Breakage")) or item.warehouse in (user_warehouse.replace("Depot", "Breakage"))):
                     frappe.throw(_("You are not allowed to submit Invoice in Warehoues:<b> {0} </b>  for Item Code  <b>{1}</b>").format(item.warehouse, item.item_code))
-
 
 def validate_taxes_and_charges_from_so(si, method):
     if not si.is_return:
