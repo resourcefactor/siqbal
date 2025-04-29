@@ -30,6 +30,18 @@ frappe.ui.form.on("Sales Order", {
 		setup_warehouse_query('warehouse', frm);
 		if (frm.doc.docstatus == 0) {
 			calculate_total_boxes(frm);
+
+			$.each(frm.doc.items || [], function (i, d) {
+				if (d.needs_approval) {
+					$("div[data-fieldname=items]").find('div.grid-row[data-idx=' + d.idx + ']').css({ 'background-color': '#ffff99' });
+					$("div[data-fieldname=items]").find('div.grid-row[data-idx=' + d.idx + ']').find('.grid-static-col').css({ 'background-color': '#ffff99' });
+				}
+				else {
+					$("div[data-fieldname=items]").find('div.grid-row[data-idx=' + d.idx + ']').css({ 'background-color': '#ffffff' });
+					$("div[data-fieldname=items]").find('div.grid-row[data-idx=' + d.idx + ']').find('.grid-static-col').css({ 'background-color': '#ffffff' });
+				}
+			});
+			
 			frappe.call({
 				method: "frappe.client.get",
 				args: {
@@ -50,6 +62,13 @@ frappe.ui.form.on("Sales Order", {
 				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 
 			});
+		}
+
+		for (let item of frm.doc.items) {
+			if (item.needs_approval === 1 && item.custom_approver_role && in_list(frappe.user_roles, item.custom_approver_role)) {
+				var item_childtable = $(`div[data-name='${item.name}']`);
+				$(item_childtable).css('background-color', 'yellow');
+			}
 		}
 	},
 	validate: function (frm, cdt, cdn) {
