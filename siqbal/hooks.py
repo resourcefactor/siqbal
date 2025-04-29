@@ -115,7 +115,10 @@ doctype_js = {
 
 doc_events = {
 	"Sales Order": {
-		"validate": "siqbal.hook_events.sales_order.set_average_valuation_rate"
+		"validate": "siqbal.hook_events.sales_order.set_average_valuation_rate",
+	"before_submit": [
+			"siqbal.hook_events.sales_order.unset_needs_approval",
+		],
 	},
 	"Sales Invoice": {
 		"validate": [
@@ -204,6 +207,7 @@ override_whitelisted_methods = {
 # }
 
 override_doctype_class = {
+    "Authorization Control": "siqbal.hook_events.override_authorization_control.OverrideAuthorizationControl",
 	'Sales Invoice': 'siqbal.hook_events.overide_sales_invoice.OverrideSalesInvoice',
 	'Purchase Invoice': 'siqbal.hook_events.override_purchase_invoice.OverridePurchaseInvoice'
 }
