@@ -26,9 +26,12 @@ frappe.ui.form.on('Purchase Invoice Item',
 	{
 		pieces: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "pieces", cdt, cdn); },
 		sqm: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "sqm", cdt, cdn); },
-		boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); },
-		qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
-		item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
+		// boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); },
+		boxes: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "boxes", cdt, cdn); row.qty = row.received_qty - row.rejected_qty },
+		received_qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
+		// qty: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn); },
+		item_name: function (frm, cdt, cdn) { CalculateSQM(locals[cdt][cdn], "received_qty", cdt, cdn); },
+		rejected_qty: function (frm, cdt, cdn) { CalculateBreakage(frm); },
 
 		rejected_boxes: function (frm, cdt, cdn) {
 			frm.doc.items.forEach((d) => {
@@ -108,23 +111,62 @@ frappe.ui.form.on('Purchase Invoice Item',
 		}
 	})
 
+// function CalculateSQM(crow, field, cdt, cdn) {
+// 	var d = locals[cdt][cdn];
+// 	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
+// 		var total_piece = 0.0;
+// 		switch (field) {
+// 			case "pieces": total_piece = Math.round(crow.pieces + (crow.boxes * crow.def_pieces)); break;
+// 			case "boxes": total_piece = Math.round(crow.boxes * crow.def_pieces); break;
+// 			case "sqm": total_piece = Math.round(crow.sqm / (crow.def_boxes / crow.def_pieces)); break;
+// 			case "qty": total_piece = Math.round(crow.qty / (crow.def_boxes / crow.def_pieces));
+// 		}
+// 		var new_sqm = parseFloat((total_piece * (crow.def_boxes / crow.def_pieces)).toFixed(4));
+// 		if (new_sqm > 0) {
+// 			crow.boxes = Math.floor((new_sqm / crow.def_boxes).toFixed(4));
+// 		} else { crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4)); }
+// 		crow.pieces = (total_piece % crow.def_pieces);
+// 		d.qty =  new_sqm;
+// 		// frappe.model.set_value(cdt, cdn, 'qty', new_sqm);
+// 		crow.sqm = new_sqm;
+// 		cur_frm.refresh_field("items");
+// 	}
+// 	else {
+// 		var new_sqm = 0;
+// 		switch (field) {
+// 			case "pieces": new_sqm = crow.pieces; break;
+// 			case "boxes": new_sqm = crow.boxes; break;
+// 			case "sqm": new_sqm = crow.sqm; break;
+// 			case "qty": new_sqm = crow.qty; break;
+// 		}
+// 		crow.sqm = new_sqm; crow.boxes = new_sqm; crow.pieces = new_sqm; crow.qty = new_sqm;
+// 		cur_frm.refresh_field("items");
+// 	}
+// }
+
+
+
 function CalculateSQM(crow, field, cdt, cdn) {
-	var d = locals[cdt][cdn];
 	if (typeof crow.def_boxes != 'undefined' && crow.def_boxes && crow.def_boxes > 0) {
 		var total_piece = 0.0;
 		switch (field) {
 			case "pieces": total_piece = Math.round(crow.pieces + (crow.boxes * crow.def_pieces)); break;
 			case "boxes": total_piece = Math.round(crow.boxes * crow.def_pieces); break;
 			case "sqm": total_piece = Math.round(crow.sqm / (crow.def_boxes / crow.def_pieces)); break;
+			case "received_qty": total_piece = Math.round(crow.received_qty / (crow.def_boxes / crow.def_pieces));
 			case "qty": total_piece = Math.round(crow.qty / (crow.def_boxes / crow.def_pieces));
 		}
 		var new_sqm = parseFloat((total_piece * (crow.def_boxes / crow.def_pieces)).toFixed(4));
 		if (new_sqm > 0) {
 			crow.boxes = Math.floor((new_sqm / crow.def_boxes).toFixed(4));
-		} else { crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4)); }
+		}
+		else {
+			crow.boxes = Math.ceil((new_sqm / crow.def_boxes).toFixed(4));
+		}
 		crow.pieces = (total_piece % crow.def_pieces);
-		d.qty =  new_sqm;
-		// frappe.model.set_value(cdt, cdn, 'qty', new_sqm);
+		crow.received_qty = new_sqm;
+		// frappe.model.set_value(cdt, cdn, 'received_qty', new_sqm);
+		frappe.model.set_value(cdt, cdn, "qty", crow.received_qty - crow.rejected_qty);
 		crow.sqm = new_sqm;
 		cur_frm.refresh_field("items");
 	}
@@ -134,9 +176,10 @@ function CalculateSQM(crow, field, cdt, cdn) {
 			case "pieces": new_sqm = crow.pieces; break;
 			case "boxes": new_sqm = crow.boxes; break;
 			case "sqm": new_sqm = crow.sqm; break;
+			case "received_qty": new_sqm = crow.qty; break;
 			case "qty": new_sqm = crow.qty; break;
 		}
-		crow.sqm = new_sqm; crow.boxes = new_sqm; crow.pieces = new_sqm; crow.qty = new_sqm;
+		crow.sqm = new_sqm; crow.boxes = new_sqm; crow.pieces = new_sqm; crow.received_qty = new_sqm;
 		cur_frm.refresh_field("items");
 	}
 }
