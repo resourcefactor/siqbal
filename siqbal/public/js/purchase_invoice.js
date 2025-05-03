@@ -3,18 +3,18 @@
 frappe.ui.form.on("Purchase Invoice", "onload", function (frm, cdt, cdn) {
 	if (frm.doc.docstatus == 0) {
 		$.each(frm.doc.items || [], function (i, d) {
-			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
+			if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "received_qty", cdt, cdn); }
 		})
 	}
 });
 
-frappe.ui.form.on("Purchase Invoice", "validate", function (frm, cdt, cdn) {
-	if (frm.doc.docstatus == 0) {
-		validateBoxes(frm);
-		// var ret_obj = setseries(frm.doc.company); cur_frm.set_value("naming_series", ret_obj.series);
-		calculate_total_boxes(frm);
-	}
-});
+// frappe.ui.form.on("Purchase Invoice", "validate", function (frm, cdt, cdn) {
+// 	if (frm.doc.docstatus == 0) {
+// 		validateBoxes(frm);
+// 		// var ret_obj = setseries(frm.doc.company); cur_frm.set_value("naming_series", ret_obj.series);
+// 		calculate_total_boxes(frm);
+// 	}
+// });
 
 // frappe.ui.form.on('Purchase Invoice', {
 // 	company: function (frm) {
