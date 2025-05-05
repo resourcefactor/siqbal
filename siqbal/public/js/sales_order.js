@@ -89,6 +89,16 @@ frappe.ui.form.on("Sales Order", {
 				if (d.qty != d.sqm && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 				if (d.sqm == d.boxes && d.pieces == d.boxes && d.def_boxes != 1 && d.item_code != 'undefined') { CalculateSQM(d, "qty", cdt, cdn); }
 				d.cost_center = frm.doc.cost_center;
+
+				if (frm.doc.company) {
+					frappe.db.get_value("Company", frm.doc.company, "abbr", (r) => {
+						if (r.abbr) {
+							var delivery_depot = "Delivery Depot" + " - " + r.abbr;
+							frm.doc.set_warehouse = delivery_depot;
+							d.warehouse = delivery_depot;
+						}
+					});
+				}
 			});
 			validateBoxes(frm);
 		}
