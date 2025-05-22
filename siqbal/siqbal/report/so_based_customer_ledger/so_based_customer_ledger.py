@@ -324,7 +324,7 @@ class UnbilledCustomerOrdersReport(object):
 				debit DOUBLE,
 				credit DOUBLE,
 				balance DOUBLE,
-				description varchar(2000))""")
+				description TEXT)""")
 		for res in data:
 			frappe.db.sql(
 				"""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s, %(description)s)""",
