@@ -6,6 +6,10 @@ frappe.provide('siqbal.selling');
 
 frappe.ui.form.on("Sales Order", {
 	refresh: function (frm) {
+		setTimeout(() => {
+			$('button.btn.btn-default:contains("Status")').remove();
+		}, 0);
+
 		set_address_query(frm, frm.doc.customer);
 		if (frm.doc.docstatus == 0 && frm.doc.company) {
 			$.each(frm.doc.items || [], function (i, d) {
