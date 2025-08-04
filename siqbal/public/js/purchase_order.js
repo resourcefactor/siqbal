@@ -253,6 +253,13 @@ siqbal.buying.PurchaseOrderController = class PurchaseOrderController extends er
 			frm: cur_frm
 		})
 	}
+
+	make_purchase_invoice() {
+		frappe.model.open_mapped_doc({
+			method: "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_invoice",
+			frm: cur_frm,
+		});
+	}
 };
 
 extend_cscript(cur_frm.cscript, new siqbal.buying.PurchaseOrderController({ frm: cur_frm }));
