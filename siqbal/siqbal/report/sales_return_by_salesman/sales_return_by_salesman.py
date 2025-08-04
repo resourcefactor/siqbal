@@ -10,24 +10,24 @@ from frappe import _
 def execute(filters=None):
 	if not filters: filters ={}
 
-	sales_order1=sales_order2=""
+	sales_order1=""
 	conditions = ""
 	if filters.get("company"): conditions = " and company = '{}' ".format(filters.get("company"))
 
 	if filters.get("sales_order"):
 		sales_order1 = " and sales_order like '%{}%' ".format(filters.get("sales_order"))
-		sales_order2 = " and cust_shipment_no like '%{}%' ".format(filters.get("sales_order"))
+		# sales_order2 = " and cust_shipment_no like '%{}%' ".format(filters.get("sales_order"))
 	else:
 		conditions += " and posting_date >= '{}' ".format(add_days(getdate(),-20))
 
 
 
 	columns = get_columns()
-	data = get_invoice_details(conditions,sales_order1,sales_order2)
+	data = get_invoice_details(conditions,sales_order1)
 
 	return columns, data
 
-def get_invoice_details(conditions,sales_order1,sales_order2):
+def get_invoice_details(conditions,sales_order1):
 	sql_query = """select si.name,si.return_against,sii.sales_order,si.posting_date,si.customer
 	,si.customer_name,si.cust_phone_number , si.rounded_total,si.sales_order_owner ,si.company,si.update_stock
 		from `tabSales Invoice` si inner join `tabSales Invoice Item` sii
@@ -38,11 +38,11 @@ def get_invoice_details(conditions,sales_order1,sales_order2):
 
 		union
 
-		select pr.name,0,pr.cust_shipment_no,pr.posting_date,pr.supplier,pr.supplier_name,'',pr.rounded_total,
+		select pr.name,0,'',pr.posting_date,pr.supplier,pr.supplier_name,'',pr.rounded_total,
 		pr.cust_sales_order_owner,pr.company,1
 		from `tabPurchase Receipt` pr
-		where pr.supplier='S-00095' and pr.docstatus=1 {0} {2}
- 		""".format(conditions,sales_order1,sales_order2)
+		where pr.supplier='S-00095' and pr.docstatus=1 {0}
+ 		""".format(conditions,sales_order1)
 	return frappe.db.sql(sql_query, as_list=1)
 
 def get_columns():
