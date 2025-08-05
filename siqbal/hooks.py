@@ -156,7 +156,10 @@ doc_events = {
 	},
 	"Purchase Invoice": {
 		"validate": "siqbal.utils.add_location"
-	}
+	},
+    "Salary Slip": {
+        "validate": "siqbal.hook_events.salary_slip.fetch_scheduled_employee_loans"
+    }
 }
 
 jenv = {
