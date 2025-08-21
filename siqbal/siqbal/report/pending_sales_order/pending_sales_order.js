@@ -16,14 +16,14 @@ frappe.query_reports["Pending Sales Order"] = {
 			"fieldname": "fdate",
 			"label": __("From Date"),
 			"fieldtype": "Date",
-			"default": get_today(),
+			"default": frappe.datetime.get_today(),
 			"reqd": 1
 		},
 		{
 			"fieldname": "tdate",
 			"label": __("To Date"),
 			"fieldtype": "Date",
-			"default": get_today(),
+			"default": frappe.datetime.get_today(),
 			"reqd": 1
 		},
 		{
