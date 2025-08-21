@@ -8,17 +8,10 @@ frappe.ui.form.on("Purchase Order", {
 				d.expected_delivery_date = frm.doc.schedule_date;
 				d.schedule_date = frm.doc.schedule_date;
 			})
+			frm.refresh_field("items");
 		}
 	},
-	// belows setup is for controller
-	// setup(frm) {
-	// 	frm._controller = new siqbal.buying.PurchaseOrderController({ frm });
-	// }
-
 });
-
-
-
 
 frappe.ui.form.on("Purchase Order", "onload", function (frm, cdt, cdn) {
 	$.each(frm.doc.items || [], function (i, d) {
@@ -44,7 +37,12 @@ frappe.ui.form.on('Purchase Order Item',
 			frappe.model.set_value(cdt, cdn, "discount_percentage", 0);
 			frappe.model.set_value(cdt, cdn, "discount_amount", 0);
 			CalculateSQM(locals[cdt][cdn], "qty", cdt, cdn);
-		}
+		},
+		items_add: function(frm, cdt, cdn){
+			var d = locals[cdt][cdn];
+			d.schedule_date = frm.doc.schedule_date;
+			frm.refresh_field("items");
+		},
 	})
 
 function CalculateSQM(crow, field, cdt, cdn) {
