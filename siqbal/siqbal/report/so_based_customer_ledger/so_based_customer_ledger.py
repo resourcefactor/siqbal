@@ -1,7 +1,6 @@
 # Copyright (c) 2023, RC and contributors
 # For license information, please see license.txt
 
-
 from __future__ import unicode_literals
 import frappe
 from frappe import _
@@ -81,6 +80,12 @@ class UnbilledCustomerOrdersReport(object):
 	def get_data(self):
 		return self.get_gl_entries()
 
+	def truncate_description(self, description, max_length=1000):
+		"""Truncate description to prevent database errors"""
+		if description and len(description) > max_length:
+			return description[:max_length-3] + "..."
+		return description
+
 	def get_gl_entries(self):
 		data = []
 		total_debit = total_credit = 0
@@ -97,7 +102,7 @@ class UnbilledCustomerOrdersReport(object):
 				"description": "",
 			}
 		)
-		ledger_rows = []
+		
 		closing_balance = frappe._dict(
 			{
 				"posting_date": self.filters.to_date,
@@ -110,6 +115,8 @@ class UnbilledCustomerOrdersReport(object):
 				"description": "",
 			}
 		)
+		
+		# Get GL entries for opening balance
 		self.gl_entries = frappe.db.sql(
 			"""
 				select
@@ -136,6 +143,7 @@ class UnbilledCustomerOrdersReport(object):
 			total_debit += gle.debit
 			total_credit += gle.credit
 
+		# Opening debit data from Sales Orders
 		opening_debit_data = frappe.db.sql(
 			"""select
 				ifnull(sum(ABS(rounded_total)),0)
@@ -152,6 +160,7 @@ class UnbilledCustomerOrdersReport(object):
 		opening_balance.debit += opening_debit_data
 		total_debit += opening_debit_data
 
+		# Opening credit data from returned Sales Orders
 		opening_credit_data = frappe.db.sql(
 			"""select
 				ifnull(sum(ABS(si.rounded_total)),0) as credit
@@ -168,6 +177,7 @@ class UnbilledCustomerOrdersReport(object):
 		opening_balance.credit += opening_credit_data
 		total_credit += opening_credit_data
 
+		# Sales Order entries with truncated description
 		sales_inv_gl = frappe.db.sql(
 			"""select
 				transaction_date as posting_date, 
@@ -176,8 +186,8 @@ class UnbilledCustomerOrdersReport(object):
 				null as return_voucher_no,
 				owner,
 				sum(ABS(rounded_total)) as debit ,0 as credit, 0 as balance,        
-				(select group_concat(concat(item_name,"/",ROUND(boxes,2),"/ ",ROUND(qty,2),"/",ROUND(rate,2)) SEPARATOR '<br/>') from `tabSales Order Item`
-						where parent = so.name) as description
+				SUBSTRING((select group_concat(concat(item_name,"/",ROUND(boxes,2),"/ ",ROUND(qty,2),"/",ROUND(rate,2)) SEPARATOR '<br/>') from `tabSales Order Item`
+						where parent = so.name), 1, 1000) as description
 				from `tabSales Order` as so
 				where docstatus = 1
 				and customer = %(customer)s
@@ -196,7 +206,10 @@ class UnbilledCustomerOrdersReport(object):
 				total_debit += res.get("debit")
 			if res.get("credit"):
 				total_credit += res.get("credit")
+			# Ensure description is not too long
+			res.description = self.truncate_description(res.description)
 
+		# Return entries with truncated description
 		r_sales_inv_gl1 = frappe.db.sql(
 			"""select so.transaction_date as posting_date,
 				so.name as voucher_no,
@@ -206,8 +219,8 @@ class UnbilledCustomerOrdersReport(object):
 				0 as debit,
 				if(sum(si.rounded_total)<0, sum(ABS(si.rounded_total)), sum(ABS(si.grand_total))) as credit,
 				0 as balance,
-				(select group_concat(concat(item_name,"/",ROUND(boxes,2),"/ ",ROUND(qty,2),"/",ROUND(rate,2)) SEPARATOR '<br/>') from `tabSales Order Item` 
-						where parent = so.name) as description
+				SUBSTRING((select group_concat(concat(item_name,"/",ROUND(boxes,2),"/ ",ROUND(qty,2),"/",ROUND(rate,2)) SEPARATOR '<br/>') from `tabSales Order Item` 
+						where parent = so.name), 1, 1000) as description
 				from `tabSales Order` as so
 				inner join `tabSales Invoice` as si on si.name in (select distinct parent from `tabSales Invoice Item` where sales_order = so.name) and si.is_return = 1 and si.docstatus = 1
 				where so.docstatus = 1
@@ -227,7 +240,9 @@ class UnbilledCustomerOrdersReport(object):
 				total_debit += res.get("debit")
 			if res.get("credit"):
 				total_credit += res.get("credit")
+			res.description = self.truncate_description(res.description)
 
+		# Payment entries
 		payment_ent_gl = frappe.db.sql(
 			"""select
 			null as posting_date, gl.voucher_type, gl.voucher_no,null as return_voucher_no,
@@ -235,7 +250,7 @@ class UnbilledCustomerOrdersReport(object):
 			if(sum(gl.debit-gl.credit) < 0, -sum(gl.debit-gl.credit), 0) as credit,
 			GROUP_CONCAT(DISTINCT gl.name SEPARATOR ', ') as name,
 			0 as balance,
-			si.remarks as description
+			SUBSTRING(si.remarks, 1, 1000) as description
 			from
 			`tabGL Entry` as gl
 			inner join `tabPayment Entry` as si on si.name = gl.voucher_no
@@ -251,6 +266,7 @@ class UnbilledCustomerOrdersReport(object):
 			self.filters,
 			as_dict=True,
 		)
+		
 		for res in payment_ent_gl:
 			if res.get("debit"):
 				total_debit += res.get("debit")
@@ -261,16 +277,18 @@ class UnbilledCustomerOrdersReport(object):
 				if split_name_lst:
 					gl = frappe.get_doc("GL Entry", split_name_lst[0])
 					res["posting_date"] = gl.posting_date
+			res.description = self.truncate_description(res.description)
 
+		# Other entries with truncated description
 		other_entry = frappe.db.sql(
 			"""select
 				posting_date, voucher_type, voucher_no,null as return_voucher_no,
 				if(sum(debit-credit) > 0, sum(debit-credit), 0) as debit,
 				if(sum(debit-credit) < 0, -sum(debit-credit), 0) as credit,
 				0 as balance,
-				(select group_concat(user_remark SEPARATOR '<br/>')
+				SUBSTRING((select group_concat(user_remark SEPARATOR '<br/>')
 					from `tabJournal Entry Account`where parent = gl.voucher_no
-					and party = gl.party) as description
+					and party = gl.party), 1, 1000) as description
 				from
 				`tabGL Entry` as gl
 				where
@@ -291,13 +309,7 @@ class UnbilledCustomerOrdersReport(object):
 				total_credit += res.get("credit")
 			if res.get("debit"):
 				total_debit += res.get("debit")
-
-			if res.voucher_type == "Journal Entry":
-				"""select group_concat(jea.user_remark SEPARATOR '<br/>' ),
-					ifnull(je.remark, ''), je.name
-					from `tabJournal Entry Account` as jea
-					inner join `tabJournal Entry` as je on je.name = jea.parent
-					group by je.name"""
+			res.description = self.truncate_description(res.description)
 
 		closing_balance.debit += total_debit
 		closing_balance.credit += total_credit
@@ -314,28 +326,11 @@ class UnbilledCustomerOrdersReport(object):
 			data.extend(other_entry)
 
 		data.append(closing_balance)
-		frappe.db.commit()
-		frappe.db.sql("DROP TABLE IF EXISTS `so report`")
-		frappe.db.sql("""CREATE TABLE `so report`(
-				posting_date DATE,
-				voucher_type varchar(100),
-				voucher_no varchar(100),
-				return_voucher_no varchar(100),
-				debit DOUBLE,
-				credit DOUBLE,
-				balance DOUBLE,
-				description varchar(2000))""")
-		for res in data:
-			frappe.db.sql(
-				"""INSERT INTO `so report` VALUES(%(posting_date)s, %(voucher_type)s, %(voucher_no)s, %(return_voucher_no)s, %(debit)s, %(credit)s, %(balance)s, %(description)s)""",
-				res,
-			)
-		dd = frappe.db.sql(
-			"""select * from `so report` order by posting_date""", as_dict=True
-		)
-		self.calculate_running_total(dd)
-		return dd
-		# return data
+		
+		# Remove the temporary table creation and use direct calculation instead
+		# This is safer and more efficient
+		self.calculate_running_total(data)
+		return data
 
 	def calculate_running_total(self, data):
 		for i, d in enumerate(data):
