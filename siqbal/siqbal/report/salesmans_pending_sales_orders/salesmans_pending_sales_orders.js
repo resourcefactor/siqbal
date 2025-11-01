@@ -9,20 +9,21 @@ frappe.query_reports["Salesmans Pending Sales Orders"] = {
 			"label": __("Company"),
 			"fieldtype": "Link",
 			"options": "Company",
+			"default": frappe.defaults.get_user_default("Company"), 
 			"reqd": 1
 		},
 		{
 			"fieldname": "fdate",
 			"label": __("From Date"),
 			"fieldtype": "Date",
-			"default": get_today(),
+			"default": frappe.datetime.get_today(), 
 			"reqd": 1
 		},
 		{
 			"fieldname": "tdate",
 			"label": __("To Date"),
 			"fieldtype": "Date",
-			"default": get_today(),
+			"default": frappe.datetime.get_today(), 
 			"reqd": 1
 		},
 		{
