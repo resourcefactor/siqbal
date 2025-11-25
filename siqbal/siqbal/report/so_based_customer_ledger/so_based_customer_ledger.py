@@ -326,9 +326,14 @@ class UnbilledCustomerOrdersReport(object):
 			data.extend(other_entry)
 
 		data.append(closing_balance)
-		
-		# Remove the temporary table creation and use direct calculation instead
-		# This is safer and more efficient
+
+		# Sort by posting date (NULLs go last)
+		data = sorted(
+			data,
+			key=lambda x: (x.posting_date is None, x.posting_date)
+		)
+
+		# Calculate running balances
 		self.calculate_running_total(data)
 		return data
 
